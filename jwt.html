@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Utility Toolkit</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #3b82f6;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: #f1f5f9;
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #334155;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .section h2 {
+      font-size: 1.4rem;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 14px;
+      margin: 10px 0 15px 0;
+      resize: vertical;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-bottom: 15px;
+    }
+
+    button:hover { background: #2563eb; }
+
+    .output {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-top: 10px;
+    }
+
+    .preview strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+      <h1>🔐 JWT Token Utility</h1>
+      <p class="subtitle">Decode • Modify • Re-Encode</p>
+    </header>
+
+    <!-- Decoder -->
+    <div class="section">
+      <h2>🔑 JWT Decoder & Modifier</h2>
+      <label for="jwtInput">Enter JWT Token:</label>
+      <textarea id="jwtInput" rows="3" placeholder="Paste JWT token here"></textarea>
+      <button onclick="decodeJWT()">Decode JWT</button>
+      <div class="output" id="jwtDecoded"></div>
+
+      <label for="jwtModified">Modify Payload (JSON):</label>
+      <textarea id="jwtModified" rows="5" placeholder="Edit decoded payload here"></textarea>
+      <button onclick="reEncodeJWT()">Re-Encode JWT</button>
+      <div class="output" id="jwtOutput"></div>
+    </div>
+
+    <!-- Security Notes -->
+    <div class="section">
+      <h2>⚠️ JWT Security Considerations</h2>
+      <div class="preview">
+        <strong>Token Issuance:</strong> JWT issued after authentication, contains claims.<br><br>
+        <strong>Transmission Risk:</strong> Always use HTTPS.<br><br>
+        <strong>Storage Risk:</strong> localStorage → XSS, cookies → CSRF. Use HttpOnly + Secure cookies.<br><br>
+        <strong>Validation Risk:</strong> Reject "none" alg. Verify signatures strictly.<br><br>
+        <strong>Replay Attack:</strong> Use short expiry + refresh tokens.<br><br>
+        <strong>Tampering:</strong> Header/payload changes require valid signature.<br><br>
+        <strong>Leakage:</strong> Never log or expose tokens.<br><br>
+        <strong>Algorithm Confusion:</strong> Enforce expected alg (RS256 ≠ HS256).<br><br>
+        <strong>Claims Manipulation:</strong> Validate claims server-side.<br>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function base64UrlDecode(str) {
+      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      try {
+        return decodeURIComponent(atob(str).split('').map(c =>
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join(''));
+      } catch (e) {
+        return "[Invalid Base64]";
+      }
+    }
+
+    function base64UrlEncode(str) {
+      return btoa(unescape(encodeURIComponent(str)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    function decodeJWT() {
+      const token = document.getElementById('jwtInput').value.trim();
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        document.getElementById('jwtDecoded').innerText = "❌ Invalid JWT format.";
+        return;
+      }
+
+      const header = base64UrlDecode(parts[0]);
+      const payload = base64UrlDecode(parts[1]);
+      const signature = parts[2];
+
+      document.getElementById('jwtDecoded').innerText =
+        "Header:\n" + header + "\n\nPayload:\n" + payload + "\n\nSignature:\n" + signature;
+
+      try {
+        document.getElementById('jwtModified').value = JSON.stringify(JSON.parse(payload), null, 2);
+      } catch {
+        document.getElementById('jwtModified').value = payload;
+      }
+    }
+
+    function reEncodeJWT() {
+      const token = document.getElementById('jwtInput').value.trim();
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        document.getElementById('jwtOutput').innerText = "❌ Invalid JWT format.";
+        return;
+      }
+
+      let modifiedPayload;
+      try {
+        modifiedPayload = JSON.stringify(JSON.parse(document.getElementById('jwtModified').value));
+      } catch (e) {
+        document.getElementById('jwtOutput').innerText = "❌ Invalid JSON in modified payload.";
+        return;
+      }
+
+      const headerDecoded = base64UrlDecode(parts[0]);
+      const encodedHeader = base64UrlEncode(headerDecoded);
+      const encodedPayload = base64UrlEncode(modifiedPayload);
+
+      const newToken = encodedHeader + "." + encodedPayload + "." + parts[2];
+      document.getElementById('jwtOutput').innerText = "Modified Token:\n" + newToken;
+    }
+  </script>
+</body>
+</html>

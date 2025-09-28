@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Testing Toolkit</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #3b82f6;
+            --muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --toolkit: #8b5cf6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: #f1f5f9;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: var(--muted);
+            font-size: 1.1rem;
+        }
+        
+        .warning-banner {
+            background: var(--warning);
+            color: #000;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .domain-input {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-toolkit {
+            background: var(--toolkit);
+            color: white;
+        }
+        
+        .btn-toolkit:hover {
+            background: #7c3aed;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #0da271;
+        }
+        
+        .category {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #334155;
+            font-size: 1.5rem;
+        }
+        
+        .toolkit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 20px;
+        }
+        
+        .tool-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-item:hover {
+            border-color: var(--toolkit);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.1);
+        }
+        
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .tool-title {
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 16px;
+        }
+        
+        .tool-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+        
+        .copy-btn.copied {
+            background: var(--success);
+        }
+        
+        .run-btn {
+            background: var(--toolkit);
+            color: white;
+        }
+        
+        .run-btn:hover {
+            background: #7c3aed;
+        }
+        
+        .command-box {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--muted);
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--toolkit);
+        }
+        
+        .vuln-info {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .vuln-info .risk {
+            color: var(--danger);
+            font-weight: 600;
+            margin-top: 8px;
+            display: block;
+        }
+        
+        .result-box {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .result-box pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        
+        .loading {
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        .error {
+            color: var(--danger);
+        }
+        
+        .success {
+            color: var(--success);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #334155;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .toolkit-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+            <h1>Security Testing Toolkit</h1>
+            <div class="subtitle">Curl Commands for Security Assessment</div>
+        </header>
+        
+        <div class="warning-banner">
+            ⚠️ FOR AUTHORIZED TESTING ONLY - Use responsibly and only on systems you own or have permission to test
+        </div>
+        
+        <div class="domain-input">
+            <div class="input-group">
+                <input type="text" id="domainInput" placeholder="Enter target domain (e.g., example.com)" value="example.com">
+                <button class="btn btn-primary" id="updateDomain">Update Domain</button>
+            </div>
+        </div>
+        
+        <div class="bulk-actions">
+            <button class="btn btn-toolkit" id="copyAllCommands">Copy All Commands</button>
+            <button class="btn btn-success" id="runAllChecks">Run All Checks</button>
+        </div>
+        
+        <!-- Security Toolkit -->
+        <div class="category">
+            <h2>🛠️ Security Assessment Toolkit</h2>
+            <div class="toolkit-grid" id="toolkitContainer">
+                <!-- Toolkit items will be generated by JavaScript -->
+            </div>
+        </div>
+        
+        <footer>
+            Security Testing Toolkit • Use responsibly and ethically
+        </footer>
+    </div>
+    
+    <div class="notification" id="notification">Command copied to clipboard!</div>
+    
+    <script>
+        // Security Toolkit Data
+        const toolkit = [
+            {
+                title: "Check HTTP Methods",
+                command: (domain) => `curl -X OPTIONS -i http://${domain}`,
+                vuln: `🔎 If response includes methods like PUT, DELETE, TRACE — server allows unsafe HTTP methods.\n❌ Risk: Overwriting data, Cross Site Tracing.`
+            },
+            {
+                title: "Check Verbose Server Info",
+                command: (domain) => `curl -v http://${domain}`,
+                vuln: `🔎 Look for: Server, X-Powered-By, Set-Cookie headers.\n❌ Risk: Technology stack exposure, missing Secure/HttpOnly flags in cookies.`
+            },
+            {
+                title: "Check Directory Listing",
+                command: (domain) => `curl -l http://${domain}/assets/`,
+                vuln: `🔎 If you receive a list of files — directory listing is enabled.\n❌ Risk: Attacker can access sensitive files unintentionally exposed.`
+            },
+            {
+                title: "Check Sensitive Files",
+                command: (domain) => `curl -s -o - http://${domain}/.git/config\ncurl -s -o - http://${domain}/.env\ncurl -s -o - http://${domain}/config.php\ncurl -s -o - http://${domain}/backup.zip\ncurl -s -o - http://${domain}/robots.txt`,
+                vuln: `🔎 If you see API keys, DB credentials, or internal config info, they are publicly accessible.\n❌ Risk: Full system compromise possible.`
+            },
+            {
+                title: "Check SSL/TLS Info",
+                command: (domain) => `openssl s_client -connect ${domain}:443`,
+                vuln: `🔎 Look for SSLv3, TLS 1.0, self-signed certificates, or weak ciphers.\n❌ Risk: Outdated encryption can be easily broken.`
+            },
+            {
+                title: "Check for Open Redirect",
+                command: (domain) => `curl -I http://${domain}/redirect?url=http://evil.com`,
+                vuln: `🔎 If Location header points to the external URL — open redirect exists.\n❌ Risk: Used for phishing attacks or stealing sessions.`
+            },
+            {
+                title: "Check Security Headers",
+                command: (domain) => `curl -I http://${domain} | grep -iE "(x-frame-options|x-content-type-options|x-xss-protection|strict-transport-security)"`,
+                vuln: `🔎 Missing security headers indicate potential vulnerabilities.\n❌ Risk: Clickjacking, MIME sniffing, XSS attacks.`
+            },
+            {
+                title: "Check CORS Configuration",
+                command: (domain) => `curl -H "Origin: http://evil.com" -I http://${domain}`,
+                vuln: `🔎 Look for Access-Control-Allow-Origin: * or evil.com in response.\n❌ Risk: Cross-origin data theft if misconfigured.`
+            },
+            {
+                title: "Check HTTP to HTTPS Redirect",
+                command: (domain) => `curl -I http://${domain}`,
+                vuln: `🔎 Check if HTTP requests redirect to HTTPS.\n❌ Risk: Data transmitted in clear text if no redirect.`
+            },
+            {
+                title: "Check API Endpoints",
+                command: (domain) => `curl -X GET http://${domain}/api/v1/users\ncurl -X POST http://${domain}/api/v1/users\ncurl -X PUT http://${domain}/api/v1/users/1`,
+                vuln: `🔎 Test common API endpoints for information disclosure.\n❌ Risk: Unauthorized data access, IDOR vulnerabilities.`
+            },
+            {
+                title: "Check File Upload Vulnerabilities",
+                command: (domain) => `echo "<?php phpinfo(); ?>" | curl -X POST -F "file=@-" http://${domain}/upload`,
+                vuln: `🔎 Attempt to upload a PHP file or check allowed extensions.\n❌ Risk: Remote code execution if uploads not properly validated.`
+            },
+            {
+                title: "Check SSRF Vulnerabilities",
+                command: (domain) => `curl -X POST http://${domain}/fetch -d 'url=http://169.254.169.254/latest/meta-data/'`,
+                vuln: `🔎 Test if server can make requests to internal endpoints.\n❌ Risk: Access to internal services, metadata exposure.`
+            }
+        ];
+
+        let currentDomain = 'example.com';
+
+        // Initialize the toolkit
+        function initializeToolkit() {
+            const container = document.getElementById('toolkitContainer');
+            container.innerHTML = '';
+            
+            toolkit.forEach((tool, index) => {
+                const command = tool.command(currentDomain);
+                const toolElement = document.createElement('div');
+                toolElement.className = 'tool-item';
+                toolElement.innerHTML = `
+                    <div class="tool-header">
+                        <div class="tool-title">${tool.title}</div>
+                        <div class="tool-actions">
+                            <button class="action-btn run-btn" data-index="${index}">Run</button>
+                            <button class="action-btn copy-btn" data-command="${command}">Copy</button>
+                        </div>
+                    </div>
+                    <div class="command-box">${command}</div>
+                    <div class="vuln-info">
+                        ${tool.vuln.replace(/\n/g, '<br>')}
+                    </div>
+                    <div class="result-box" id="result-${index}">
+                        <pre class="loading">Click "Run" to execute this check...</pre>
+                    </div>
+                `;
+                container.appendChild(toolElement);
+            });
+        }
+
+        // Copy functionality
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Command copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('Command copied to clipboard!');
+            });
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+
+        // Simulate command execution (in real implementation, this would call a backend)
+        function simulateCommandExecution(command, resultElement) {
+            resultElement.innerHTML = '<pre class="loading">Executing command...</pre>';
+            resultElement.style.display = 'block';
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // This is a simulation - in real implementation, you'd call a backend service
+                const simulatedResults = [
+                    `HTTP/1.1 200 OK\nAllow: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE\nServer: Apache/2.4.41\n\n🔍 Unsafe methods detected: PUT, DELETE, TRACE`,
+                    `* Connected to ${currentDomain} port 80\n> GET / HTTP/1.1\n> Host: ${currentDomain}\n< HTTP/1.1 200 OK\n< Server: nginx/1.18.0\n< X-Powered-By: PHP/7.4.3\n< Set-Cookie: session=abc123; Path=/`,
+                    `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n<html><head><title>Index of /assets/</title></head>\n<body><h1>Index of /assets/</h1>\n<ul>\n<li><a href="style.css">style.css</a></li>\n<li><a href="app.js">app.js</a></li>\n</ul>\n\n🔍 Directory listing enabled - security risk!`,
+                    `.git/config: 404 Not Found\n.env: 200 OK - File exposed!\nDB_PASSWORD=secret123\nAPI_KEY=abc123xyz\nconfig.php: 403 Forbidden\nbackup.zip: 200 OK\nrobots.txt: 200 OK`,
+                    `CONNECTED(00000003)\nSSL-Session:\n    Protocol  : TLSv1.3\n    Cipher    : TLS_AES_256_GCM_SHA384\n    \n🔍 Strong TLS configuration detected`,
+                    `HTTP/1.1 302 Found\nLocation: http://evil.com\n\n🔍 Open redirect vulnerability detected!`,
+                    `HTTP/1.1 200 OK\nX-Frame-Options: DENY\nX-Content-Type-Options: nosniff\nStrict-Transport-Security: max-age=31536000\n\n🔍 Security headers properly configured`,
+                    `HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: http://evil.com\n\n🔍 CORS misconfiguration - allows arbitrary origins`,
+                    `HTTP/1.1 301 Moved Permanently\nLocation: https://${currentDomain}/\n\n🔍 Proper HTTP to HTTPS redirect configured`,
+                    `HTTP/1.1 401 Unauthorized\n{"error": "Authentication required"}\n\n🔍 API endpoints properly protected`,
+                    `HTTP/1.1 415 Unsupported Media Type\n{"error": "File type not allowed"}\n\n🔍 File upload validation working correctly`,
+                    `HTTP/1.1 403 Forbidden\n{"error": "Internal requests not allowed"}\n\n🔍 SSRF protection enabled`
+                ];
+                
+                const randomResult = simulatedResults[Math.floor(Math.random() * simulatedResults.length)];
+                const isError = randomResult.includes('risk') || randomResult.includes('vulnerability') || randomResult.includes('misconfiguration');
+                const resultClass = isError ? 'error' : 'success';
+                
+                resultElement.innerHTML = `<pre class="${resultClass}">${randomResult}</pre>`;
+            }, 1500);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeToolkit();
+            
+            // Update domain
+            document.getElementById('updateDomain').addEventListener('click', function() {
+                const newDomain = document.getElementById('domainInput').value.trim();
+                if (newDomain) {
+                    currentDomain = newDomain;
+                    initializeToolkit();
+                    showNotification(`Domain updated to: ${newDomain}`);
+                }
+            });
+            
+            // Copy button functionality
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('copy-btn')) {
+                    const command = e.target.getAttribute('data-command');
+                    copyToClipboard(command);
+                    
+                    // Visual feedback
+                    e.target.textContent = 'Copied!';
+                    e.target.classList.add('copied');
+                    setTimeout(() => {
+                        e.target.textContent = 'Copy';
+                        e.target.classList.remove('copied');
+                    }, 1500);
+                }
+                
+                // Run button functionality
+                if (e.target.classList.contains('run-btn')) {
+                    const index = e.target.getAttribute('data-index');
+                    const command = toolkit[index].command(currentDomain);
+                    const resultElement = document.getElementById(`result-${index}`);
+                    simulateCommandExecution(command, resultElement);
+                }
+            });
+            
+            // Copy all commands
+            document.getElementById('copyAllCommands').addEventListener('click', function() {
+                const allCommands = toolkit.map(tool => tool.command(currentDomain)).join('\n\n');
+                copyToClipboard(allCommands);
+            });
+            
+            // Run all checks
+            document.getElementById('runAllChecks').addEventListener('click', function() {
+                toolkit.forEach((tool, index) => {
+                    const command = tool.command(currentDomain);
+                    const resultElement = document.getElementById(`result-${index}`);
+                    simulateCommandExecution(command, resultElement);
+                });
+                showNotification('Running all security checks...');
+            });
+            
+            // Enter key to update domain
+            document.getElementById('domainInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('updateDomain').click();
+                }
+            });
+        });
+
+        // Add hover effects
+        document.addEventListener('mouseover', function(e) {
+            if (e.target.closest('.tool-item')) {
+                const item = e.target.closest('.tool-item');
+                item.style.transform = 'translateY(-2px)';
+            }
+        });
+        
+        document.addEventListener('mouseout', function(e) {
+            if (e.target.closest('.tool-item')) {
+                const item = e.target.closest('.tool-item');
+                item.style.transform = 'translateY(0)';
+            }
+        });
+    </script>
+</body>
+</html>

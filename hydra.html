@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hydra — Command Builder (UI-only)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+:root{--bg:#071017;--panel:#0b1416;--accent:#00ff88;--muted:#6ea68a;--radius:12px}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#02060a,#071017);color:var(--accent);font-family:'Share Tech Mono',monospace}
+.wrapper{max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:360px 1fr;gap:18px}
+.header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:54px;height:54px;border-radius:8px;background:linear-gradient(135deg,#06b,#0ff);display:flex;align-items:center;justify-content:center;color:#001;font-weight:900}
+.card{padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
+.field{display:flex;flex-direction:column;margin-bottom:12px}
+.field label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.input,select,textarea{padding:10px;border-radius:8px;background:transparent;border:1px dashed rgba(255,255,255,0.03);color:var(--accent);outline:none}
+.cmd-preview{background:#021515;padding:16px;border-radius:10px;border:1px solid rgba(0,255,136,0.04);min-height:140px;white-space:pre-wrap;color:var(--accent);font-size:15px}
+.actions{display:flex;gap:10px}
+.btn{padding:10px 14px;border-radius:10px;background:#06b;color:#001;border:none;cursor:pointer;font-weight:800}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent)}
+.hint{font-size:13px;color:var(--muted)}
+.footer{grid-column:1/-1;text-align:center;color:var(--muted);margin-top:8px}
+@media (max-width:980px){.wrapper{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="brand">
+      <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+      <div class="logo">HY</div>
+      <div>
+        <div style="font-weight:800">Hydra — Command Builder</div>
+        <div class="hint">UI-only · builds copyable hydra commands for common services</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="hint">Ctrl/Cmd + C to copy</div>
+      <button id="themeToggle" class="btn ghost">Toggle Theme</button>
+    </div>
+  </div>
+
+  <!-- sidebar inputs -->
+  <aside class="card">
+    <div class="field">
+      <label for="h-service">Service</label>
+      <select id="h-service" class="input">
+        <option value="ssh">ssh</option>
+        <option value="ftp">ftp</option>
+        <option value="smtp">smtp</option>
+        <option value="http-get">http-get</option>
+        <option value="http-post-form">http-post-form</option>
+        <option value="rdp">rdp</option>
+        <option value="mysql">mysql</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="h-target">Target (host or URL)</label>
+      <input id="h-target" class="input" placeholder="e.g. 10.10.10.10 or example.com/path">
+    </div>
+
+    <div class="field">
+      <label>User / Userlist</label>
+      <div style="display:flex;gap:8px">
+        <input id="h-user" class="input" placeholder="single user (e.g. admin)" style="flex:1">
+        <input id="h-userlist" class="input" placeholder="/path/to/users.txt" style="flex:1">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Password / Passlist</label>
+      <div style="display:flex;gap:8px">
+        <input id="h-pass" class="input" placeholder="single password (e.g. 12345)" style="flex:1">
+        <input id="h-passlist" class="input" placeholder="/path/to/pass.txt" style="flex:1">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="h-port">Port (optional)</label>
+      <input id="h-port" class="input" placeholder="e.g. 22">
+    </div>
+
+    <div class="field">
+      <label for="h-threads">Threads (-t)</label>
+      <input id="h-threads" class="input" placeholder="e.g. 4">
+    </div>
+
+    <div class="field">
+      <label for="h-extra">Extra options</label>
+      <input id="h-extra" class="input" placeholder="e.g. -V -f -o results.txt">
+    </div>
+
+    <div class="field" id="httpFormOptions" style="display:none">
+      <label for="h-httpform">HTTP POST form (format: path:params:login-fail-string)</label>
+      <input id="h-httpform" class="input" placeholder="/login.php:username=^USER^&password=^PASS^:Invalid login">
+      <div class="hint">Use ^USER^ and ^PASS^ placeholders. Hydra expects the form in specific format.</div>
+    </div>
+
+  </aside>
+
+  <!-- main preview -->
+  <main class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong>Generated Command</strong>
+      <div class="hint">Preview updates as you configure</div>
+    </div>
+
+    <div id="cmdPreview" class="cmd-preview">Enter target and credential lists to build a hydra command.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <div class="actions">
+        <button id="h-copy" class="btn">Copy</button>
+        <button id="h-reset" class="btn ghost">Reset</button>
+        <button id="h-download" class="btn ghost">Download</button>
+      </div>
+      <div class="hint">Use on authorized systems only.</div>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="hint">Examples</div>
+      <div style="margin-top:8px;background:#011212;padding:12px;border-radius:8px;border:1px solid rgba(0,255,136,0.04)">hydra -L users.txt -P pass.txt ssh://10.10.10.10 -s 22 -t 4</div>
+      <div style="margin-top:8px;background:#011212;padding:12px;border-radius:8px;border:1px solid rgba(0,255,136,0.04)">hydra -l admin -P pass.txt ftp://example.com -s 21 -V</div>
+      <div style="margin-top:8px;background:#011212;padding:12px;border-radius:8px;border:1px solid rgba(0,255,136,0.04)">hydra -L users.txt -P pass.txt http-post-form "example.com/login.php:username=^USER^&password=^PASS^:Login failed" -t 6</div>
+    </div>
+  </main>
+
+  <div class="footer">Hydra UI — UI-only; no execution. Built for demo purposes.</div>
+</div>
+
+<script>
+// Elements
+const h_service = document.getElementById('h-service');
+const h_target = document.getElementById('h-target');
+const h_user = document.getElementById('h-user');
+const h_userlist = document.getElementById('h-userlist');
+const h_pass = document.getElementById('h-pass');
+const h_passlist = document.getElementById('h-passlist');
+const h_port = document.getElementById('h-port');
+const h_threads = document.getElementById('h-threads');
+const h_extra = document.getElementById('h-extra');
+const cmdPreview = document.getElementById('cmdPreview');
+const h_copy = document.getElementById('h-copy');
+const h_reset = document.getElementById('h-reset');
+const h_download = document.getElementById('h-download');
+const h_httpFormOptions = document.getElementById('httpFormOptions');
+const h_httpform = document.getElementById('h-httpform');
+const themeToggle = document.getElementById('themeToggle');
+
+function showToast(msg){ console.log(msg); }
+
+function buildHydra(){
+  const service = h_service.value;
+  const target = h_target.value.trim();
+  const user = h_user.value.trim();
+  const userlist = h_userlist.value.trim();
+  const pass = h_pass.value.trim();
+  const passlist = h_passlist.value.trim();
+  const port = h_port.value.trim();
+  const threads = h_threads.value.trim();
+  const extra = h_extra.value.trim();
+  const httpForm = h_httpform ? h_httpform.value.trim() : '';
+
+  if(!target) return 'Please enter a target host or URL.';
+
+  // decide user/pass flags
+  let userFlag = '';
+  if(userlist) userFlag = `-L ${userlist}`;
+  else if(user) userFlag = `-l ${user}`;
+
+  let passFlag = '';
+  if(passlist) passFlag = `-P ${passlist}`;
+  else if(pass) passFlag = `-p ${pass}`;
+
+  // build service target prefix
+  let svcTarget = '';
+  if(service.startsWith('http')){
+    // http services: hydra expects url without protocol in form string for http-post-form example
+    if(service === 'http-get'){
+      // hydra http-get requires host and path? use full URL
+      svcTarget = `${target}`;
+    } else if(service === 'http-post-form'){
+      // use form string
+      if(!httpForm) return 'For http-post-form select, enter the form string in HTTP POST form field.';
+      // ensure quotes around form
+      svcTarget = `"${target}:${httpForm}"`;
+    }
+  } else {
+    // non-http services: prefix like ssh://host
+    const proto = service + '://';
+    svcTarget = proto + target;
+  }
+
+  let cmdParts = ['hydra'];
+  if(userFlag) cmdParts.push(userFlag);
+  if(passFlag) cmdParts.push(passFlag);
+  if(threads) cmdParts.push(`-t ${threads}`);
+  if(extra) cmdParts.push(extra);
+  if(port) cmdParts.push(`-s ${port}`);
+
+  cmdParts.push(svcTarget);
+
+  return cmdParts.join(' ');
+}
+
+// event listeners
+[h_service,h_target,h_user,h_userlist,h_pass,h_passlist,h_port,h_threads,h_extra].forEach(el=>el.addEventListener('input', ()=>{ cmdPreview.textContent = buildHydra(); checkHttpFormVisibility(); }));
+if(h_httpform) h_httpform.addEventListener('input', ()=>{ cmdPreview.textContent = buildHydra(); });
+
+function checkHttpFormVisibility(){ if(h_service.value === 'http-post-form') h_httpFormOptions.style.display = 'block'; else h_httpFormOptions.style.display = 'none'; }
+checkHttpFormVisibility();
+
+// copy
+h_copy.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('Copied'); }catch(e){ alert('Copy failed'); } });
+// download
+h_download.addEventListener('click', ()=>{ const cmd = cmdPreview.textContent.trim(); if(!cmd){ alert('No command to download'); return; } const blob = new Blob([cmd],{type:'text/plain'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='hydra-command.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+// reset
+h_reset.addEventListener('click', ()=>{ [h_target,h_user,h_userlist,h_pass,h_passlist,h_port,h_threads,h_extra].forEach(i=>i.value=''); if(h_httpform) h_httpform.value=''; cmdPreview.textContent = buildHydra(); showToast('Reset'); });
+
+// keyboard copy
+window.addEventListener('keydown', async (e)=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='c'){ e.preventDefault(); try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('Copied'); }catch{} } });
+
+// init
+cmdPreview.textContent = buildHydra();
+</script>
+</body>
+</html>

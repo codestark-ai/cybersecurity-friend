@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POC Prompt Generator</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0f1724;color:#e6eef3;display:flex;justify-content:center;align-items:flex-start;padding:20px}
+.wrap{width:100%;max-width:800px}
+.card{background:#0b1220;padding:16px;border-radius:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.03)}
+label{display:block;margin-bottom:6px;color:#9aa6b2;font-size:14px}
+input[type=text]{width:calc(100% - 60px);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6eef3;font-size:14px;margin-bottom:10px}
+textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6eef3;font-size:14px;margin-bottom:10px;min-height:100px;resize:vertical}
+button{background:#06b6d4;color:#022;border:0;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;margin-right:8px}
+button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#9aa6b2}
+.preview{white-space:pre-wrap;background:rgba(255,255,255,0.03);padding:12px;border-radius:8px;min-height:250px;font-family:monospace}
+.step-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.step-row input{flex:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card">
+  <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+    
+<h2>POC Prompt Generator</h2>
+
+<label>Finding Name</label>
+<input id="finding" type="text" placeholder="e.g. SQL Injection in login form">
+
+<label>Steps of POC</label>
+<div id="stepsContainer"></div>
+<button id="addStep">Add Step</button>
+
+<div style="margin-top:12px;">
+<button id="gen">Generate Prompt</button>
+<button class="ghost" id="copy">Copy</button>
+<button class="ghost" id="download">Download</button>
+</div>
+</div>
+
+<div class="card">
+<label>Generated Prompt</label>
+<div id="preview" class="preview">Your POC prompt will appear here...</div>
+</div>
+</div>
+
+<script>
+// STEP MANAGEMENT
+const stepsContainer = document.getElementById('stepsContainer');
+
+function addStep(value=''){
+  const div = document.createElement('div');
+  div.className = 'step-row';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Enter step';
+  input.value = value;
+  const btn = document.createElement('button');
+  btn.textContent = 'X';
+  btn.className = 'ghost';
+  btn.onclick = ()=>div.remove();
+  div.appendChild(input);
+  div.appendChild(btn);
+  stepsContainer.appendChild(div);
+}
+
+// Add initial 3 steps
+addStep(); addStep(); addStep();
+document.getElementById('addStep').addEventListener('click', ()=>addStep());
+
+// STEP CONVERSION
+function convertStepText(text){
+  return text.replace(/\bI opened\b/gi,"Open")
+             .replace(/\bI navigated\b/gi,"Navigate to")
+             .replace(/\bI entered\b/gi,"Enter")
+             .replace(/\bI clicked\b/gi,"Click")
+             .replace(/\bI selected\b/gi,"Select")
+             .replace(/\bI uploaded\b/gi,"Upload")
+             .replace(/\bI downloaded\b/gi,"Download")
+             .replace(/\bI executed\b/gi,"Execute")
+             .replace(/\bI checked\b/gi,"Check")
+             .replace(/\bI submitted\b/gi,"Submit")
+             .replace(/\bI logged in\b/gi,"Log in")
+             .replace(/\bI logged out\b/gi,"Log out")
+             .replace(/\bI created\b/gi,"Create");
+}
+
+function formatSteps(stepsRaw){
+  return stepsRaw.map((s,i)=>`Step ${i+1}: ${convertStepText(s.trim())}`).join("\n");
+}
+
+// GENERATE PROMPT
+function generate(){
+  const finding = document.getElementById('finding').value.trim() || 'Finding Name';
+  const stepInputs = [...stepsContainer.querySelectorAll('input')];
+  const stepsRaw = stepInputs.map(i=>i.value.trim()).filter(Boolean);
+  const steps = formatSteps(stepsRaw);
+
+  const output = `Report Steps Instruction
+
+Building Prompt
+
+Finding Name:
+${finding}
+
+Steps of POC:
+${steps}
+
+Steps Format:
+Convert the next following sentences to the desired format. For ex, "I opened the login page, entered the username and password, and clicked Sign in." convert to "Open the login page, enter the username and password and click sign in"
+
+Description:
+Explain what the vulnerability is and why it occurs.
+
+Impact:
+State why it matters and the risk if not fixed.
+
+Recommendation:
+Provide fix/mitigation steps.`;
+
+  document.getElementById('preview').textContent = output;
+}
+
+// COPY AND DOWNLOAD
+function copyText() {
+  const text = document.getElementById('preview').textContent;
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>alert('Copied!')).catch(()=>fallbackCopy(text));
+  else fallbackCopy(text);
+}
+
+function fallbackCopy(text){
+  const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('Copied!');
+}
+
+function downloadText(){
+  const text = document.getElementById('preview').textContent;
+  const blob = new Blob([text], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'POC_Prompt.txt';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+document.getElementById('gen').addEventListener('click', generate);
+document.getElementById('copy').addEventListener('click', copyText);
+document.getElementById('download').addEventListener('click', downloadText);
+</script>
+</body>
+</html>

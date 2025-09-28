@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CyberFriend — Toolkit</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  header {
+    background: var(--card);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--accent);
+  }
+  .filters {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-top: .5rem;
+  }
+  .filters button {
+    background: var(--accent);
+    border: none;
+    padding: .4rem .8rem;
+    border-radius: .5rem;
+    cursor: pointer;
+    color: white;
+    font-size: .9rem;
+    transition: background .2s;
+  }
+  .filters button.active { background: var(--accent-hover); }
+  .filters button:hover { background: var(--accent-hover); }
+  main {
+    flex: 1;
+    padding: 1.5rem;
+  }
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .search {
+    flex: 1;
+    max-width: 400px;
+  }
+  .search input {
+    width: 100%;
+    padding: .5rem .75rem;
+    border-radius: .5rem;
+    border: 1px solid var(--muted);
+    background: var(--card);
+    color: var(--text);
+  }
+  .grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .card {
+    background: var(--card);
+    padding: 1rem;
+    border-radius: .75rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    transition: transform .2s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .card:hover { transform: translateY(-3px); background: #24334d; }
+  .card h4 { margin: 0 0 .5rem; font-size: 1.1rem; color: var(--accent); }
+  .card p { margin: 0; font-size: .9rem; color: var(--muted); }
+  footer {
+    background: var(--card);
+    text-align: center;
+    padding: .75rem;
+    font-size: .85rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+    <h1>⚡ CyberFriend Toolkit</h1>
+    <div class="filters">
+      <button data-layer="all" class="active">All</button>
+      <button data-layer="network">Network</button>
+      <button data-layer="web">Web</button>
+      <button data-layer="application">Application</button>
+      <button data-layer="cloud">Cloud</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="top-bar">
+      <div class="search">
+        <input type="text" id="searchInput" placeholder="Search tools...">
+      </div>
+      <div id="visibleCount"></div>
+    </div>
+    <div class="grid" id="toolGrid">
+
+      <!-- Network Tools -->
+      <a href="nmap.html" class="card" data-layer="network">
+        <h4>Nmap</h4>
+        <p>Port scanner and network mapper.</p>
+      </a>
+      <a href="hydra.html" class="card" data-layer="network">
+        <h4>Hydra</h4>
+        <p>Fast password brute-force tool.</p>
+      </a>
+      <a href="curl.html" class="card" data-layer="network">
+        <h4>cURL</h4>
+        <p>Transfer data with URLs.</p>
+      </a>
+
+      <!-- Web Tools -->
+      <a href="sqlmap.html" class="card" data-layer="web">
+        <h4>SQLMap</h4>
+        <p>Automated SQL injection tool.</p>
+      </a>
+      <a href="Feroxbuster.html" class="card" data-layer="web">
+        <h4>Feroxbuster</h4>
+        <p>Recursive content discovery tool.</p>
+      </a>
+      <a href="fuzz.html" class="card" data-layer="web">
+        <h4>Fuzz</h4>
+        <p>Fuzzing for hidden parameters.</p>
+      </a>
+      <a href="gobuster.html" class="card" data-layer="web">
+        <h4>Gobuster</h4>
+        <p>Directory and file brute-forcer.</p>
+      </a>
+      <a href="injection.html" class="card" data-layer="web">
+        <h4>Injection</h4>
+        <p>Code & command injection tests.</p>
+      </a>
+      <a href="pathtraversal.html" class="card" data-layer="web">
+        <h4>Path Traversal</h4>
+        <p>Test for directory traversal flaws.</p>
+      </a>
+
+      <!-- Application Tools -->
+      <a href="jwt.html" class="card" data-layer="application">
+        <h4>JWT</h4>
+        <p>JSON Web Token analysis tool.</p>
+      </a>
+      <a href="gmail.html" class="card" data-layer="application">
+        <h4>Gmail</h4>
+        <p>gmail message template</p>
+      </a>
+      <a href="maliousfile.html" class="card" data-layer="application">
+        <h4>Malicious File</h4>
+        <p>File upload vulnerability tests.</p>
+      </a>
+      <a href="universalup.html" class="card" data-layer="application">
+        <h4>Universal Username/Password</h4>
+        <p>Common default credential lists.</p>
+      </a>
+      <a href="promtp.html" class="card" data-layer="application">
+        <h4>Report Prompt</h4>
+        <p>help to make fine report</p>
+      </a>
+
+      <!-- Cloud Tools -->
+      <a href="#" class="card" data-layer="cloud">
+        <h4>Cloud Security</h4>
+        <p>Placeholder for cloud-specific tools.</p>
+      </a>
+
+    </div>
+  </main>
+
+  <footer>CyberFriend Toolkit © 2025</footer>
+
+<script>
+(function(){
+  const searchInput = document.getElementById('searchInput');
+  const toolGrid = document.getElementById('toolGrid');
+  const cards = Array.from(toolGrid.querySelectorAll('.card'));
+  const layerButtons = document.querySelectorAll('.filters button');
+  const visibleCount = document.getElementById('visibleCount');
+
+  function setLayer(layer){
+    layerButtons.forEach(btn=>btn.classList.toggle('active', btn.getAttribute('data-layer')===layer));
+    filterTools(layer, searchInput.value.trim());
+  }
+
+  function filterTools(layer='all', q=''){
+    const term = q.toLowerCase();
+    let visible = 0;
+    cards.forEach(card=>{
+      const cardLayer = card.getAttribute('data-layer');
+      const title = card.querySelector('h4').textContent.toLowerCase();
+      const desc = card.querySelector('p').textContent.toLowerCase();
+      const matchesLayer = (layer === 'all' || cardLayer === layer);
+      const matchesSearch = (!term || title.includes(term) || desc.includes(term));
+      const show = matchesLayer && matchesSearch;
+      card.style.display = show ? '' : 'none';
+      if(show) visible++;
+    });
+    visibleCount.textContent = visible + ' tools';
+  }
+
+  searchInput.addEventListener('input', ()=>{
+    const activeBtn = document.querySelector('.filters button.active');
+    const layer = activeBtn ? activeBtn.getAttribute('data-layer') : 'all';
+    filterTools(layer, searchInput.value.trim());
+  });
+
+  layerButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setLayer(btn.getAttribute('data-layer'));
+    });
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(['1','2','3','4','5'].includes(e.key)){
+      const map = { '1':'all','2':'network','3':'web','4':'application','5':'cloud' };
+      setLayer(map[e.key]);
+    }
+  });
+
+  setLayer('all');
+})();
+</script>
+</body>
+</html>

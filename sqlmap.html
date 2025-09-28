@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sqlmap — Command Builder (Burp request support)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+:root{--bg:#071017;--panel:#0b1416;--accent:#00ff88;--muted:#6ea68a;--radius:12px}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#02060a,#071017);color:var(--accent);font-family:'Share Tech Mono',monospace}
+.wrapper{max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:360px 1fr;gap:18px}
+.header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:54px;height:54px;border-radius:8px;background:linear-gradient(135deg,#06b,#0ff);display:flex;align-items:center;justify-content:center;color:#001;font-weight:900}
+.card{padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
+.field{display:flex;flex-direction:column;margin-bottom:12px}
+.field label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.input,select,textarea{padding:10px;border-radius:8px;background:transparent;border:1px dashed rgba(255,255,255,0.03);color:var(--accent);outline:none}
+.cmd-preview{background:#021515;padding:16px;border-radius:10px;border:1px solid rgba(0,255,136,0.04);min-height:120px;white-space:pre-wrap;color:var(--accent);font-size:15px}
+.actions{display:flex;gap:10px}
+.btn{padding:10px 14px;border-radius:10px;background:#06b;color:#001;border:none;cursor:pointer;font-weight:800}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent)}
+.hint{font-size:13px;color:var(--muted)}
+.footer{grid-column:1/-1;text-align:center;color:var(--muted);margin-top:8px}
+@media (max-width:980px){.wrapper{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="brand">
+      <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+    
+      <div class="logo">SQL</div>
+      <div>
+        <div style="font-weight:800">Sqlmap — Command Builder</div>
+        <div class="hint">Supports raw Burp request paste and download as request file (-r)</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="hint">Ctrl/Cmd + C copies the preview</div>
+      <button id="themeToggle" class="btn ghost">Toggle Theme</button>
+    </div>
+  </div>
+
+  <!-- sidebar: inputs -->
+  <aside class="card">
+    <div class="field">
+      <label for="s-target">Target URL (optional if using -r)</label>
+      <input id="s-target" class="input" placeholder="http://example.com/vuln.php?id=1">
+    </div>
+
+    <div class="field">
+      <label for="s-data">POST data (use quotes for values)</label>
+      <input id="s-data" class="input" placeholder="id=1&action=view">
+    </div>
+
+    <div class="field">
+      <label for="s-options">Additional Options</label>
+      <input id="s-options" class="input" placeholder="--batch --threads=10 --dbs">
+    </div>
+
+    <div class="field">
+      <label for="s-risk">Risk / Level</label>
+      <div style="display:flex;gap:8px">
+        <input id="s-risk" class="input" placeholder="risk (1-3)" style="width:100px">
+        <input id="s-level" class="input" placeholder="level (1-5)" style="width:100px">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="s-others">Useful Flags</label>
+      <select id="s-others" class="input">
+        <option value="">-- select shortcut --</option>
+        <option value="--dbs">--dbs (list databases)</option>
+        <option value="--tables">--tables (requires -D)</option>
+        <option value="--dump">--dump (requires -D -T)</option>
+        <option value="--os-shell">--os-shell</option>
+      </select>
+    </div>
+
+    <hr />
+
+    <div class="field">
+      <label>Paste raw Burp request (use this to create a request file -r)</label>
+      <textarea id="burpRaw" class="input" rows="8" placeholder="Paste raw HTTP request from Burp here"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="parseBurp" class="btn">Parse</button>
+        <button id="downloadReq" class="btn ghost">Download request.txt</button>
+      </div>
+      <div class="hint">If you paste a Burp request and download it, the generated command will use <code>-r request.txt</code>.</div>
+    </div>
+
+  </aside>
+
+  <!-- main: preview -->
+  <main class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong>Generated Command</strong>
+      <div class="hint">Preview updates as you configure</div>
+    </div>
+
+    <div id="cmdPreview" class="cmd-preview">Enter target or paste Burp request to generate sqlmap command.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <div class="actions">
+        <button id="copyBtn" class="btn">Copy</button>
+        <button id="resetBtn" class="btn ghost">Reset</button>
+        <button id="downloadBtn" class="btn ghost">Download command (txt)</button>
+      </div>
+      <div class="hint">Use responsibly on authorized systems only.</div>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="hint">Notes:</div>
+      <ul style="color:var(--muted);margin-top:8px">
+        <li>Use <code>-r request.txt</code> if you have a saved Burp raw request file.</li>
+        <li>If both raw request and target/data are present, the UI prefers <code>-r</code>.</li>
+      </ul>
+    </div>
+  </main>
+
+  <div class="footer">Sqlmap UI — UI-only; no network activity is performed by this page.</div>
+</div>
+
+<script>
+// Elements
+const s_target = document.getElementById('s-target');
+const s_data = document.getElementById('s-data');
+const s_options = document.getElementById('s-options');
+const s_risk = document.getElementById('s-risk');
+const s_level = document.getElementById('s-level');
+const s_others = document.getElementById('s-others');
+const burpRaw = document.getElementById('burpRaw');
+const parseBurp = document.getElementById('parseBurp');
+const downloadReq = document.getElementById('downloadReq');
+const cmdPreview = document.getElementById('cmdPreview');
+const copyBtn = document.getElementById('copyBtn');
+const resetBtn = document.getElementById('resetBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+
+let lastParsedRequest = null; // store parsed object
+
+function showToast(msg){ console.log(msg); }
+
+// Parse raw Burp request into structured object (method, host, path, headers, body)
+function parseRawRequest(raw){
+  const lines = raw.replace(/\r/g,'').split('\n');
+  if(!lines.length) return null;
+  // first line: METHOD PATH HTTP/1.1
+  const first = lines[0].split(' ');
+  if(first.length < 2) return null;
+  const method = first[0];
+  const path = first[1];
+  let host = '';
+  const headers = {};
+  let i=1;
+  for(; i<lines.length; i++){
+    const line = lines[i];
+    if(line.trim() === ''){ i++; break; }
+    const idx = line.indexOf(':');
+    if(idx>0){
+      const k = line.slice(0,idx).trim();
+      const v = line.slice(idx+1).trim();
+      headers[k] = v;
+      if(k.toLowerCase() === 'host') host = v;
+    }
+  }
+  const body = lines.slice(i).join('\n');
+  return { method, path, host, headers, body };
+}
+
+function buildCommand(){
+  const raw = burpRaw.value.trim();
+  const target = s_target.value.trim();
+  const data = s_data.value.trim();
+  const opts = s_options.value.trim();
+  const risk = s_risk.value.trim();
+  const level = s_level.value.trim();
+  const shortcut = s_others.value.trim();
+
+  // prefer -r when raw Burp request exists
+  if(raw){
+    // assume user will save as request.txt when downloading
+    let cmd = 'sqlmap -r request.txt';
+    if(risk) cmd += ` --risk=${risk}`;
+    if(level) cmd += ` --level=${level}`;
+    if(shortcut) cmd += ` ${shortcut}`;
+    if(opts) cmd += ` ${opts}`;
+    return cmd;
+  }
+
+  // else build from target/data
+  if(!target) return 'Please enter a target URL or paste a Burp request.';
+  let cmd = `sqlmap -u "${target}"`;
+  if(data) cmd += ` --data "${data.replace(/"/g,'\"')}"`;
+  if(risk) cmd += ` --risk=${risk}`;
+  if(level) cmd += ` --level=${level}`;
+  if(shortcut) cmd += ` ${shortcut}`;
+  if(opts) cmd += ` ${opts}`;
+  return cmd;
+}
+
+// events
+[s_target,s_data,s_options,s_risk,s_level,s_others,burpRaw].forEach(el=>el.addEventListener('input', ()=>{ cmdPreview.textContent = buildCommand(); }));
+
+parseBurp.addEventListener('click', ()=>{
+  const raw = burpRaw.value.trim();
+  if(!raw){ alert('Paste a raw Burp request first'); return; }
+  const parsed = parseRawRequest(raw);
+  if(!parsed){ alert('Could not parse request — ensure it is a full raw HTTP request'); return; }
+  lastParsedRequest = parsed;
+  // attempt to fill target and data fields for convenience
+  if(parsed.host){
+    const proto = parsed.headers['X-Forwarded-Proto'] || (parsed.headers['Upgrade-Insecure-Requests'] ? 'https' : 'http');
+    const url = `${proto}://${parsed.host}${parsed.path}`;
+    s_target.value = url;
+  }
+  if(parsed.body) s_data.value = parsed.body;
+  cmdPreview.textContent = buildCommand();
+  showToast('Parsed request — preview updated (uses -r if you download request file)');
+});
+
+// download raw request as request.txt
+downloadReq.addEventListener('click', ()=>{
+  const raw = burpRaw.value.trim();
+  if(!raw){ alert('Paste a Burp raw request first'); return; }
+  const blob = new Blob([raw], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'request.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  // update preview to use -r
+  cmdPreview.textContent = buildCommand();
+  showToast('request.txt downloaded — use -r request.txt when running sqlmap');
+});
+
+// copy preview
+copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('Copied'); }catch(e){ alert('Copy failed — select and copy manually'); }});
+// download command as txt
+downloadBtn.addEventListener('click', ()=>{
+  const cmd = cmdPreview.textContent.trim(); if(!cmd){ alert('No command to download'); return; }
+  const blob = new Blob([cmd], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'sqlmap-command.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+// reset
+resetBtn.addEventListener('click', ()=>{
+  [s_target,s_data,s_options,s_risk,s_level].forEach(i=>i.value=''); s_others.selectedIndex=0; burpRaw.value=''; lastParsedRequest=null; cmdPreview.textContent = buildCommand(); showToast('Reset');
+});
+
+// keyboard copy shortcut
+window.addEventListener('keydown', async (e)=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='c'){ e.preventDefault(); try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('Copied'); }catch{} } });
+
+// init
+cmdPreview.textContent = buildCommand();
+</script>
+</body>
+</html>

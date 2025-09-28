@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Feroxbuster — Command Builder (UI-only)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+:root{--bg:#071017;--panel:#0b1416;--accent:#00ff88;--muted:#6ea68a;--radius:12px}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#02060a,#071017);color:var(--accent);font-family:'Share Tech Mono',monospace}
+.wrapper{max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:320px 1fr;gap:18px}
+.header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:54px;height:54px;border-radius:8px;background:linear-gradient(135deg,#06b,#0ff);display:flex;align-items:center;justify-content:center;color:#001;font-weight:900}
+.card{padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
+.field{display:flex;flex-direction:column;margin-bottom:12px}
+.field label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.input,select,textarea{padding:10px;border-radius:8px;background:transparent;border:1px dashed rgba(255,255,255,0.03);color:var(--accent);outline:none}
+.ext-grid{display:flex;flex-wrap:wrap;gap:8px}
+.check{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+.cmd-preview{background:#021515;padding:16px;border-radius:10px;border:1px solid rgba(0,255,136,0.04);min-height:140px;white-space:pre-wrap;color:var(--accent);font-size:15px}
+.actions{display:flex;gap:10px}
+.btn{padding:10px 14px;border-radius:10px;background:#06b;color:#001;border:none;cursor:pointer;font-weight:800}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent)}
+.hint{font-size:13px;color:var(--muted)}
+.footer{grid-column:1/-1;text-align:center;color:var(--muted);margin-top:8px}
+@media (max-width:980px){.wrapper{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="brand">
+      <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+    
+      <div class="logo">FB</div>
+      <div>
+        <div style="font-weight:800">Feroxbuster — Command Builder</div>
+        <div class="hint">UI-only · builds copyable feroxbuster commands</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="hint">Ctrl/Cmd + C to copy</div>
+      <button id="themeToggle" class="btn ghost">Toggle Theme</button>
+    </div>
+  </div>
+
+  <!-- sidebar -->
+  <aside class="card">
+    <div class="field">
+      <label for="f-url">Target URL</label>
+      <input id="f-url" class="input" placeholder="https://example.com/path">
+    </div>
+
+    <div class="field">
+      <label for="f-wordlist">Wordlist</label>
+      <select id="f-wordlist" class="input">
+        <option value="">-- Select Wordlist --</option>
+        <option value="/usr/share/wordlists/dirb/common.txt">dirb – common.txt</option>
+        <option value="/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt">raft medium dirs</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>File extensions (adds -e ext1,ext2)</label>
+      <div class="ext-grid" id="extGrid">
+        <label class="check"><input type="checkbox" class="ext" value="html"> .html</label>
+        <label class="check"><input type="checkbox" class="ext" value="php"> .php</label>
+        <label class="check"><input type="checkbox" class="ext" value="js"> .js</label>
+        <label class="check"><input type="checkbox" class="ext" value="json"> .json</label>
+        <label class="check"><input type="checkbox" class="ext" value="txt"> .txt</label>
+        <label class="check"><input type="checkbox" class="ext" value="js.map"> .js.map</label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="f-customExt" class="input" placeholder="add custom ext (comma or space separated)">
+        <button id="f-addExt" class="btn ghost" type="button">Add</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="f-threads">Threads</label>
+      <input id="f-threads" class="input" placeholder="e.g. 10">
+    </div>
+
+    <div class="field">
+      <label for="f-rate">Rate limit</label>
+      <input id="f-rate" class="input" placeholder="requests per second (optional)">
+    </div>
+
+    <div class="field">
+      <label for="f-options">Additional Options</label>
+      <input id="f-options" class="input" placeholder="e.g. --recursive --depth 2 --timeout 10">
+    </div>
+
+    <div class="hint">This builder only creates a command string for copy/paste — it does not execute anything.</div>
+  </aside>
+
+  <!-- main preview -->
+  <main class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong>Generated Command</strong>
+      <div class="hint">Preview updates as you configure</div>
+    </div>
+
+    <div id="cmdPreview" class="cmd-preview">Enter target and wordlist to generate a feroxbuster command.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <div class="actions">
+        <button id="f-copy" class="btn">Copy</button>
+        <button id="f-reset" class="btn ghost">Reset</button>
+        <button id="f-full" class="btn ghost">Fullscreen</button>
+      </div>
+      <div class="hint">Use on authorized systems only.</div>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="hint">Examples</div>
+      <div style="margin-top:8px;background:#011212;padding:12px;border-radius:8px;border:1px solid rgba(0,255,136,0.04)">feroxbuster -u https://example.com -w /path/to/wordlist -e php,html,js --threads 10 --rate-limit 5 --recursive --depth 2</div>
+    </div>
+  </main>
+
+  <div class="footer">Feroxbuster UI — UI-only; no execution. Made for demo purposes.</div>
+</div>
+
+<script>
+// Elements
+const f_url = document.getElementById('f-url');
+const f_wordlist = document.getElementById('f-wordlist');
+const f_threads = document.getElementById('f-threads');
+const f_rate = document.getElementById('f-rate');
+const f_options = document.getElementById('f-options');
+const cmdPreview = document.getElementById('cmdPreview');
+const f_copy = document.getElementById('f-copy');
+const f_reset = document.getElementById('f-reset');
+const f_full = document.getElementById('f-full');
+const extGrid = document.getElementById('extGrid');
+const f_customExt = document.getElementById('f-customExt');
+const f_addExt = document.getElementById('f-addExt');
+const themeToggle = document.getElementById('themeToggle');
+
+function extCheckboxes(){ return Array.from(document.querySelectorAll('.ext')); }
+function showToast(msg){ /* minimal: use alert-free UX — console for dev */ console.log(msg); }
+
+// add custom extensions (comma or space separated)
+f_addExt.addEventListener('click', ()=>{
+  const raw = f_customExt.value.trim(); if(!raw) return;
+  const parts = raw.split(/[\s,]+/).map(s=>s.replace(/\./g,'')).filter(Boolean);
+  for(const p of parts){
+    const exists = extCheckboxes().find(cb=>cb.value===p);
+    if(exists){ exists.checked = true; continue; }
+    const label = document.createElement('label'); label.className='check';
+    const input = document.createElement('input'); input.type='checkbox'; input.className='ext'; input.value=p; input.checked=true;
+    label.appendChild(input); label.appendChild(document.createTextNode(' .' + p));
+    extGrid.appendChild(label);
+  }
+  f_customExt.value=''; updateFerox();
+});
+
+// build command
+[f_url,f_wordlist,f_threads,f_rate,f_options].forEach(el=>el.addEventListener('input', updateFerox));
+extGrid.addEventListener('change', updateFerox);
+
+function getSelectedExts(){ return extCheckboxes().filter(cb=>cb.checked).map(cb=>cb.value); }
+
+function updateFerox(){
+  const url = f_url.value.trim();
+  const word = f_wordlist.value.trim();
+  const threads = f_threads.value.trim();
+  const rate = f_rate.value.trim();
+  const opts = f_options.value.trim();
+  if(!url || !word){ cmdPreview.textContent = 'Enter target URL and wordlist to generate command.'; return; }
+  let cmd = `feroxbuster -u "${url}" -w ${word}`;
+  const exts = getSelectedExts();
+  if(exts.length) cmd += ` -e ${exts.join(',')}`;
+  if(threads) cmd += ` --threads ${threads}`;
+  if(rate) cmd += ` --rate-limit ${rate}`;
+  if(opts) cmd += ` ${opts}`;
+  cmdPreview.textContent = cmd;
+}
+
+// copy
+f_copy.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('copied'); }catch(e){ alert('Copy failed — select text manually'); } });
+// reset
+f_reset.addEventListener('click', ()=>{
+  [f_url,f_wordlist,f_threads,f_rate,f_options].forEach(i=>i.value='');
+  document.querySelectorAll('.ext').forEach(cb=>cb.checked=false);
+  updateFerox();
+});
+// fullscreen
+f_full.addEventListener('click', ()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else document.exitFullscreen(); });
+// theme
+themeToggle.addEventListener('click', ()=>{ const cur=document.documentElement.getAttribute('data-theme'); document.documentElement.setAttribute('data-theme', cur==='light'?'dark':'light'); });
+
+// keyboard copy shortcut Ctrl/Cmd+C
+window.addEventListener('keydown', async (e)=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='c'){ e.preventDefault(); try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('copied'); }catch{} } });
+
+// init
+updateFerox();
+</script>
+</body>
+</html>

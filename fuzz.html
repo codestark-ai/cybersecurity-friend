@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fuzz — Command Builder (UI-only)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+:root{--bg:#071017;--panel:#0b1416;--accent:#00ff88;--muted:#6ea68a;--radius:12px}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#02060a,#071017);color:var(--accent);font-family:'Share Tech Mono',monospace}
+.wrapper{max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:320px 1fr;gap:18px}
+.header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:54px;height:54px;border-radius:8px;background:linear-gradient(135deg,#06b,#0ff);display:flex;align-items:center;justify-content:center;color:#001;font-weight:900}
+.card{padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
+.field{display:flex;flex-direction:column;margin-bottom:12px}
+.field label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.input,select,textarea{padding:10px;border-radius:8px;background:transparent;border:1px dashed rgba(255,255,255,0.03);color:var(--accent);outline:none}
+.flex-row{display:flex;gap:8px}
+.cmd-preview{background:#021515;padding:16px;border-radius:10px;border:1px solid rgba(0,255,136,0.04);min-height:140px;white-space:pre-wrap;color:var(--accent);font-size:15px}
+.actions{display:flex;gap:10px}
+.btn{padding:10px 14px;border-radius:10px;background:#06b;color:#001;border:none;cursor:pointer;font-weight:800}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent)}
+.hint{font-size:13px;color:var(--muted)}
+@media (max-width:980px){.wrapper{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="brand">
+      <img src="logo.png" style="width: 100px; height: 100px;" alt="">
+      <div class="logo">FZ</div>
+      <div>
+        <div style="font-weight:800">Fuzz — Command Builder</div>
+        <div class="hint">UI-only · builds copyable fuzzing commands (tool-agnostic)</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="hint">Ctrl/Cmd + C to copy</div>
+      <button id="themeToggle" class="btn ghost">Toggle Theme</button>
+    </div>
+  </div>
+
+  <!-- sidebar -->
+  <aside class="card">
+    <div class="field">
+      <label for="u-target">Target URL / Endpoint</label>
+      <input id="u-target" class="input" placeholder="https://example.com/api/v1/users?id=FUZZ">
+    </div>
+
+    <div class="field">
+      <label for="u-method">HTTP Method</label>
+      <select id="u-method" class="input">
+        <option>GET</option>
+        <option>POST</option>
+        <option>PUT</option>
+        <option>DELETE</option>
+        <option>HEAD</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="u-payloads">Wordlist / Payloads</label>
+      <select id="u-payloads" class="input">
+        <option value="">-- Select Wordlist --</option>
+        <option value="/usr/share/wordlists/raft-large.txt">raft-large</option>
+        <option value="/usr/share/wordlists/common.txt">common.txt</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="u-place">Injection Position</label>
+      <select id="u-place" class="input">
+        <option value="url">URL (use FUZZ placeholder)</option>
+        <option value="body">Body (use FUZZ in body template)</option>
+        <option value="header">Header (specify header with FUZZ)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="u-body">Body template (use FUZZ)</label>
+      <textarea id="u-body" class="input" rows="4" placeholder='{"username":"FUZZ","password":"pass"}'></textarea>
+    </div>
+
+    <div class="field">
+      <label for="u-headers">Custom Headers (one per line, use FUZZ if needed)</label>
+      <textarea id="u-headers" class="input" rows="3" placeholder="X-Api-Key: abc123\nUser-Agent: fuzz-bot"></textarea>
+    </div>
+
+  </aside>
+
+  <!-- main preview -->
+  <main class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong>Generated Command</strong>
+      <div class="hint">Preview updates as you configure</div>
+    </div>
+
+    <div id="cmdPreview" class="cmd-preview">Enter target and wordlist to generate a fuzz command.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <div class="actions">
+        <button id="copyBtn" class="btn">Copy</button>
+        <button id="resetBtn" class="btn ghost">Reset</button>
+        <button id="fullBtn" class="btn ghost">Fullscreen</button>
+      </div>
+      <div class="hint">This tool is UI-only and does not execute any network activity.</div>
+    </div>
+
+    <div style="margin-top:14px">
+      <div class="hint">Examples (tool-agnostic):</div>
+      <div style="margin-top:8px;background:#011212;padding:12px;border-radius:8px;border:1px solid rgba(0,255,136,0.04)">fuzzer -u "https://example.com/search?q=FUZZ" -w /path/to/wordlist -m GET --headers "X-Api-Key: abc"
+      </div>
+      <div style="margin-top:8px;background:#011212;padding:12px;border-radius:8px;border:1px solid rgba(0,255,136,0.04)">fuzzer -u "https://api.example.com/login" -m POST -d '{"user":"FUZZ","pass":"x"}' -w /path/to/payloads --concurrency 20</div>
+    </div>
+  </main>
+
+  <div class="footer" style="grid-column:1/-1;text-align:center;color:var(--muted);margin-top:8px">Fuzz UI — UI-only; use responsibly on authorized targets.</div>
+</div>
+
+<script>
+// Elements
+const u_target = document.getElementById('u-target');
+const u_method = document.getElementById('u-method');
+const u_payloads = document.getElementById('u-payloads');
+const u_place = document.getElementById('u-place');
+const u_body = document.getElementById('u-body');
+const u_headers = document.getElementById('u-headers');
+const cmdPreview = document.getElementById('cmdPreview');
+const copyBtn = document.getElementById('copyBtn');
+const resetBtn = document.getElementById('resetBtn');
+const fullBtn = document.getElementById('fullBtn');
+const themeToggle = document.getElementById('themeToggle');
+
+function showToast(msg){ console.log(msg); }
+
+// Build a tool-agnostic fuzz command (example syntax)
+[u_target,u_method,u_payloads,u_place,u_body,u_headers].forEach(el=>el.addEventListener('input', updateFuzz));
+
+function updateFuzz(){
+  const target = u_target.value.trim();
+  const method = u_method.value.trim().toUpperCase();
+  const word = u_payloads.value.trim();
+  const place = u_place.value;
+  const body = u_body.value.trim();
+  const headers = u_headers.value.trim();
+
+  if(!target || !word){ cmdPreview.textContent = 'Enter target (with FUZZ placeholder for URL) and select a wordlist to generate the command.'; return; }
+
+  // start building
+  let cmd = `fuzz -u "${target}" -w ${word} -m ${method}`;
+
+  if(place === 'body' && body) cmd += ` -d '${body.replace(/'/g,"\\'")}'`;
+  if(headers) {
+    // convert headers lines to a single quoted string
+    const h = headers.split(/\n+/).map(l=>l.trim()).filter(Boolean).join('; ');
+    cmd += ` --headers "${h.replace(/"/g,'') }"`;
+  }
+
+  // append placeholder for more options
+  cmd += ` --concurrency 10 --timeout 10`;
+
+  cmdPreview.textContent = cmd;
+}
+
+// Copy
+copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('copied'); }catch(e){ alert('Copy failed — select text manually'); }});
+// Reset
+resetBtn.addEventListener('click', ()=>{ [u_target,u_payloads,u_body,u_headers].forEach(i=>i.value=''); u_method.value='GET'; u_place.value='url'; updateFuzz(); showToast('reset'); });
+// Fullscreen
+fullBtn.addEventListener('click', ()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else document.exitFullscreen(); });
+// Theme
+themeToggle.addEventListener('click', ()=>{ const cur=document.documentElement.getAttribute('data-theme'); document.documentElement.setAttribute('data-theme', cur==='light'?'dark':'light'); });
+
+// shortcut copy
+window.addEventListener('keydown', async (e)=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='c'){ e.preventDefault(); try{ await navigator.clipboard.writeText(cmdPreview.textContent); showToast('copied'); }catch{} } });
+
+// init
+updateFuzz();
+</script>
+</body>
+</html>
