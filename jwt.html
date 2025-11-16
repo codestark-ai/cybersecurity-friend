@@ -1,209 +1,332 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Security Utility Toolkit</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JWT Utility — Two Column</title>
   <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --accent: #3b82f6;
-      --muted: #94a3b8;
-      --danger: #ef4444;
-      --success: #10b981;
+    :root{
+      --bg:#0f172a;
+      --card:#1e293b;
+      --accent:#3b82f6;
+      --muted:#94a3b8;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --success:#10b981;
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: #f1f5f9;
-      line-height: 1.6;
-      padding: 20px;
-      min-height: 100vh;
+      background:var(--bg); color:#f1f5f9; padding:20px; min-height:100vh;
+    }
+    .container{ max-width:1200px; margin:0 auto; }
+    header{ text-align:center; margin-bottom:20px; }
+    h1{
+      font-size:2rem; margin-bottom:6px;
+      background: linear-gradient(135deg,#3b82f6,#8b5cf6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:20px;
+      align-items:start;
+    }
+    /* responsive */
+    @media (max-width:900px){ .layout{ grid-template-columns: 1fr; } }
+
+    .panel{
+      background:var(--card); padding:18px; border-radius:12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.03);
+    }
+    .panel h2{ font-size:1.15rem; margin-bottom:10px; border-bottom:1px solid #334155; padding-bottom:8px; }
+    label{ display:block; margin-top:8px; font-size:0.95rem; color:var(--muted); }
+    textarea{
+      width:100%; background:#071028; color:#e6eef8; border:1px solid #334155;
+      padding:12px; border-radius:8px; font-family: monospace; font-size:13px; margin-top:8px;
+      resize:vertical; min-height:90px;
+    }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+    button{
+      background:var(--accent); color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer;
+      font-weight:600; transition:transform .08s ease;
+    }
+    button:hover{ transform:translateY(-1px); }
+    .small-btn{ padding:8px 10px; font-size:0.9rem; }
+    .output{
+      background:#0b1220; border:1px solid #334155; border-radius:8px; padding:12px; font-family:monospace;
+      font-size:13px; white-space:pre-wrap; margin-top:10px;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
+    /* analysis styling */
+    .analysis{ margin-top:12px; padding:12px; border-radius:8px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); }
+    .issue{ margin-bottom:10px; padding:10px; border-radius:8px; }
+    .critical{ border-left:4px solid var(--danger); background: rgba(239,68,68,0.05); }
+    .warning{ border-left:4px solid var(--warning); background: rgba(245,158,11,0.03); }
+    .ok{ border-left:4px solid var(--success); background: rgba(16,185,129,0.03); }
+    .issue-title{ font-weight:700; display:flex; gap:8px; align-items:center; }
+    .muted{ color:var(--muted); font-size:0.95rem; margin-top:6px; }
 
-    header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #334155;
-    }
+    /* decoded card specifics */
+    .decoded-block{ background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); margin-top:8px; font-family:monospace; font-size:13px; }
+    .controls{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+    .hint{ color:var(--muted); font-size:0.9rem; margin-top:8px; }
+    .status{ font-weight:700; margin-left:8px; font-size:0.95rem; color:var(--muted); }
+    .flex-between{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .small-muted{ font-size:0.9rem; color:var(--muted); }
 
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .section {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    .section h2 {
-      font-size: 1.4rem;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #334155;
-      padding-bottom: 8px;
-    }
-
-    textarea {
-      width: 100%;
-      background: #0f172a;
-      color: #f8fafc;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 14px;
-      margin: 10px 0 15px 0;
-      resize: vertical;
-    }
-
-    button {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.3s;
-      margin-bottom: 15px;
-    }
-
-    button:hover { background: #2563eb; }
-
-    .output {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 14px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      margin-top: 10px;
-    }
-
-    .preview strong { color: var(--accent); }
+    /* copy button style */
+    .copy-btn{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); padding:8px 10px; border-radius:8px; cursor:pointer; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <img src="logo.png" style="width: 100px; height: 100px;" alt="">
-      <h1>🔐 JWT Token Utility</h1>
-      <p class="subtitle">Decode • Modify • Re-Encode</p>
+      <h1>🔐 JWT Utility — Paste & Analyze (Left) · Decode & Modify (Right)</h1>
+      <div class="small-muted">Responsive two-column UI — paste token left, view/edit right.</div>
     </header>
 
-    <!-- Decoder -->
-    <div class="section">
-      <h2>🔑 JWT Decoder & Modifier</h2>
-      <label for="jwtInput">Enter JWT Token:</label>
-      <textarea id="jwtInput" rows="3" placeholder="Paste JWT token here"></textarea>
-      <button onclick="decodeJWT()">Decode JWT</button>
-      <div class="output" id="jwtDecoded"></div>
+    <div class="layout">
+      <!-- LEFT: Paste + Vulnerability analysis -->
+      <div class="panel" id="leftPanel">
+        <h2>📥 Paste JWT & Vulnerability Scanner</h2>
 
-      <label for="jwtModified">Modify Payload (JSON):</label>
-      <textarea id="jwtModified" rows="5" placeholder="Edit decoded payload here"></textarea>
-      <button onclick="reEncodeJWT()">Re-Encode JWT</button>
-      <div class="output" id="jwtOutput"></div>
-    </div>
+        <label for="jwtInput">Paste JWT token here</label>
+        <textarea id="jwtInput" rows="5" placeholder="eyJhbGciOiJ..."></textarea>
 
-    <!-- Security Notes -->
-    <div class="section">
-      <h2>⚠️ JWT Security Considerations</h2>
-      <div class="preview">
-        <strong>Token Issuance:</strong> JWT issued after authentication, contains claims.<br><br>
-        <strong>Transmission Risk:</strong> Always use HTTPS.<br><br>
-        <strong>Storage Risk:</strong> localStorage → XSS, cookies → CSRF. Use HttpOnly + Secure cookies.<br><br>
-        <strong>Validation Risk:</strong> Reject "none" alg. Verify signatures strictly.<br><br>
-        <strong>Replay Attack:</strong> Use short expiry + refresh tokens.<br><br>
-        <strong>Tampering:</strong> Header/payload changes require valid signature.<br><br>
-        <strong>Leakage:</strong> Never log or expose tokens.<br><br>
-        <strong>Algorithm Confusion:</strong> Enforce expected alg (RS256 ≠ HS256).<br><br>
-        <strong>Claims Manipulation:</strong> Validate claims server-side.<br>
+        <div class="row">
+          <button id="btnDecode" onclick="decodeJWT()">Decode & Analyze</button>
+          <button class="small-btn" onclick="loadSample()">Load Example</button>
+          <button class="small-btn" onclick="clearAll()">Clear</button>
+          <button class="small-btn" onclick="copyInput()">Copy Input</button>
+          <div class="status" id="leftStatus">Ready</div>
+        </div>
+
+        <div class="analysis" id="analysisArea" style="display:none;"></div>
+
+        <div class="hint">Quick findings appear above after decode. Critical issues are highlighted.</div>
+      </div>
+
+      <!-- RIGHT: Decoded + modify + re-encode -->
+      <div class="panel" id="rightPanel">
+        <h2>🛠 Decoded Payload & Modify</h2>
+
+        <div class="flex-between">
+          <div class="small-muted">Decoded header, payload & signature (editable payload below)</div>
+          <div>
+            <button class="copy-btn" onclick="copyDecoded()">Copy Decoded</button>
+            <button class="copy-btn" onclick="copyModified()">Copy Modified Token</button>
+          </div>
+        </div>
+
+        <div class="decoded-block" id="decodedView">
+          Header:\n\nPayload:\n\nSignature:
+        </div>
+
+        <label for="jwtModified">Modify Payload (JSON)</label>
+        <textarea id="jwtModified" rows="9" placeholder='{"sub":"123", "exp": 1710000000}'></textarea>
+
+        <div class="controls">
+          <button onclick="reEncodeJWT()">Re-Encode (keep original signature)</button>
+          <button onclick="previewClaims()">Validate JSON & Preview Claims</button>
+          <button onclick="downloadToken()">Download Token</button>
+        </div>
+
+        <div class="output" id="jwtOutput">Modified token will appear here after re-encode.</div>
+
+        <div class="hint" style="margin-top:8px;">
+          ⚠️ Note: Re-encoding keeps the original signature — it will NOT validate if payload changed unless re-signed with issuer's key.
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    function base64UrlDecode(str) {
+    // --- base64url helpers ---
+    function base64UrlDecodeToString(str) {
+      if (!str) return "";
       str = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (str.length % 4) { str += '='; }
       try {
-        return decodeURIComponent(atob(str).split('').map(c =>
+        return decodeURIComponent(Array.prototype.map.call(atob(str), c =>
           '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
         ).join(''));
       } catch (e) {
-        return "[Invalid Base64]";
+        try { return atob(str); } catch { return "[Invalid Base64]"; }
       }
     }
-
-    function base64UrlEncode(str) {
-      return btoa(unescape(encodeURIComponent(str)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
+    function base64UrlEncodeFromString(str) {
+      return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
 
-    function decodeJWT() {
-      const token = document.getElementById('jwtInput').value.trim();
+    // --- DOM refs ---
+    const jwtInput = document.getElementById('jwtInput');
+    const jwtModified = document.getElementById('jwtModified');
+    const decodedView = document.getElementById('decodedView');
+    const analysisArea = document.getElementById('analysisArea');
+    const jwtOutput = document.getElementById('jwtOutput');
+    const leftStatus = document.getElementById('leftStatus');
+
+    // decode + analyze
+    function decodeJWT(){
+      const token = jwtInput.value.trim();
+      if(!token){ leftStatus.innerText = 'Paste a token first'; leftStatus.style.color='var(--warning)'; return; }
+      leftStatus.innerText = 'Decoding...'; leftStatus.style.color='var(--muted)';
+
       const parts = token.split('.');
-      if (parts.length !== 3) {
-        document.getElementById('jwtDecoded').innerText = "❌ Invalid JWT format.";
+      if(parts.length !== 3){
+        decodedView.innerText = '❌ Invalid JWT format (expect 3 parts).';
+        analysisArea.style.display='block';
+        analysisArea.innerHTML = `<div class="issue critical"><div class="issue-title">❗ Invalid format</div><div class="muted">Token must have header.payload.signature</div></div>`;
+        leftStatus.innerText = 'Invalid token';
+        leftStatus.style.color='var(--danger)';
         return;
       }
+      const [h64,p64,sig] = parts;
+      const headerRaw = base64UrlDecodeToString(h64);
+      const payloadRaw = base64UrlDecodeToString(p64);
+      const signatureRaw = sig || '';
 
-      const header = base64UrlDecode(parts[0]);
-      const payload = base64UrlDecode(parts[1]);
+      decodedView.innerText = `Header:\n${headerRaw}\n\nPayload:\n${payloadRaw}\n\nSignature (base64url):\n${signatureRaw}`;
+
+      // try parse payload json
+      let hObj=null, pObj=null;
+      try { hObj = JSON.parse(headerRaw); } catch(e){ /* ignore */ }
+      try { pObj = JSON.parse(payloadRaw); } catch(e){ /* ignore */ }
+
+      if(pObj) jwtModified.value = JSON.stringify(pObj, null, 2);
+      else jwtModified.value = payloadRaw;
+
+      // run analysis
+      const results = analyzeJWT(hObj, pObj, signatureRaw, h64, p64);
+      renderAnalysis(results);
+      leftStatus.innerText = 'Analysis ready';
+      leftStatus.style.color='var(--success)';
+    }
+
+    // analysis (adapted from previous logic, condensed)
+    function analyzeJWT(header, payload, signature, h64, p64){
+      const results = [];
+      const now = Math.floor(Date.now()/1000);
+      function push(sev,title,details,sugg){
+        results.push({severity:sev,title,details,sugg});
+      }
+
+      if(!header) push('critical','Malformed header','Header not valid JSON or decode failed.','Ensure header is JSON.');
+      if(!payload) push('critical','Malformed payload','Payload not valid JSON or decode failed.','Ensure payload is JSON.');
+
+      if(header){
+        const alg = header.alg || '(missing)';
+        if(alg === 'none') push('critical','Algorithm "none"','Token uses alg="none" — signature bypass.', 'Reject alg="none". Use signed tokens.');
+        else if(/^HS\d+$/.test(alg)) push('warning','HMAC algorithm','alg="'+alg+'" uses symmetric key; check server expects this.', 'Ensure server expects HMAC and key is secret.');
+        else if(/^RS|^ES|^PS/.test(alg)) push('ok','Asymmetric alg','alg="'+alg+'" — asymmetric algorithm detected.', 'Validate with issuer public key.');
+        else push('warning','Unknown algorithm','alg="'+alg+'" unrecognized.', 'Whitelist expected algorithms.');
+        if(!header.kid) push('warning','No kid','Header missing kid (key id).','Include kid to support key rotation.');
+      }
+
+      if(!signature || signature.length===0) push('critical','Empty signature','Signature part empty or missing.','Do not accept unsigned tokens.');
+      else if(signature.length < 10) push('warning','Short signature','Signature unusually short.','Verify signature server-side with correct key.');
+      else push('ok','Signature present','Signature exists (base64url).','Still validate server-side.');
+
+      if(payload){
+        if(payload.exp === undefined) push('warning','Missing exp','Token has no expiration (exp).','Use short-lived tokens with refresh.');
+        else if(typeof payload.exp !== 'number') push('warning','Non-numeric exp','exp is not numeric.','Use numeric Unix epoch seconds.');
+        else{
+          if(payload.exp <= now) push('critical','Token expired',`exp=${payload.exp} (now=${now}).`,'Reject expired tokens.');
+          else{
+            const days = Math.round((payload.exp - now)/(24*3600));
+            if(days > 30) push('warning','Long expiry',`Expires in ~${days} day(s).`,'Consider reducing token lifetime.');
+            else push('ok','exp OK',`Expires in ~${days} day(s).`,'Short lifetimes reduce replay risk.');
+          }
+        }
+        if(!payload.iss) push('warning','Missing iss','No issuer (iss) claim.','Include/validate iss.');
+        else push('ok','Issuer present',`iss=${payload.iss}`,'Validate issuer.');
+        if(!payload.aud) push('warning','Missing aud','No audience (aud) claim.','Use aud to ensure token intended for your service.');
+        if(!payload.sub) push('warning','Missing sub','No subject (sub) claim.','Use sub to identify principal.');
+        if(payload.admin || payload.isAdmin || payload.role === 'admin') push('warning','Privilege claim','Token contains admin/privilege claim.','Validate issuance and server-side authority checks.');
+      }
+
+      const hasCritical = results.some(r=>r.severity==='critical');
+      if(hasCritical) push('critical','Immediate action required','Critical issues found — do not trust this token.','Re-issue tokens with proper signing and expiry.');
+      else push('ok','Analysis complete','No critical failures detected (warnings may remain).','Validate signature server-side and follow suggestions.');
+
+      return results;
+    }
+
+    function renderAnalysis(results){
+      analysisArea.style.display='block';
+      analysisArea.innerHTML = '';
+      for(const r of results){
+        const div = document.createElement('div');
+        div.className = 'issue ' + (r.severity==='critical'?'critical': r.severity==='warning'?'warning':'ok');
+        const title = document.createElement('div'); title.className='issue-title';
+        const icon = r.severity==='critical'?'❗': (r.severity==='warning'?'⚠️':'✅');
+        title.innerHTML = `<span style="min-width:28px;display:inline-block">${icon}</span><span>${r.title}</span>`;
+        div.appendChild(title);
+        const details = document.createElement('div'); details.className='muted'; details.innerText = r.details;
+        div.appendChild(details);
+        if(r.sugg){
+          const sug = document.createElement('div'); sug.className='hint'; sug.innerHTML = `<strong>Suggestion:</strong> ${r.sugg}`;
+          div.appendChild(sug);
+        }
+        analysisArea.appendChild(div);
+      }
+    }
+
+    // re-encode (keeps original header & signature)
+    function reEncodeJWT(){
+      const token = jwtInput.value.trim();
+      if(!token){ jwtOutput.innerText = '❌ Provide original JWT to reuse header & signature.'; return; }
+      const parts = token.split('.');
+      if(parts.length!==3){ jwtOutput.innerText = '❌ Original token invalid.'; return; }
+      const headerB64 = parts[0];
       const signature = parts[2];
 
-      document.getElementById('jwtDecoded').innerText =
-        "Header:\n" + header + "\n\nPayload:\n" + payload + "\n\nSignature:\n" + signature;
+      let mod = jwtModified.value.trim();
+      try{
+        const parsed = JSON.parse(mod);
+        mod = JSON.stringify(parsed);
+      }catch(e){
+        jwtOutput.innerText = '❌ Invalid JSON in modified payload. Fix and try again.'; return;
+      }
+      const encoded = base64UrlEncodeFromString(mod);
+      const newToken = headerB64 + '.' + encoded + '.' + signature;
+      jwtOutput.innerText = newToken + '\n\n⚠️ Signature unchanged — this token WILL fail verification if payload changed.';
+    }
 
-      try {
-        document.getElementById('jwtModified').value = JSON.stringify(JSON.parse(payload), null, 2);
-      } catch {
-        document.getElementById('jwtModified').value = payload;
+    // helpers: copy, preview, download, sample, clear
+    function copyInput(){ navigator.clipboard.writeText(jwtInput.value).then(()=>alert('Copied input to clipboard')); }
+    function copyDecoded(){ navigator.clipboard.writeText(decodedView.innerText).then(()=>alert('Copied decoded view')); }
+    function copyModified(){ navigator.clipboard.writeText(jwtOutput.innerText).then(()=>alert('Copied modified token')); }
+
+    function previewClaims(){
+      const txt = jwtModified.value.trim();
+      try{
+        const obj = JSON.parse(txt);
+        alert('Valid JSON. Top-level keys: ' + Object.keys(obj).join(', '));
+      }catch(e){
+        alert('Invalid JSON: ' + e.message);
       }
     }
 
-    function reEncodeJWT() {
-      const token = document.getElementById('jwtInput').value.trim();
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        document.getElementById('jwtOutput').innerText = "❌ Invalid JWT format.";
-        return;
-      }
+    function downloadToken(){
+      const txt = jwtOutput.innerText.trim();
+      if(!txt){ alert('No token to download'); return; }
+      const blob = new Blob([txt], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'modified_jwt.txt'; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
 
-      let modifiedPayload;
-      try {
-        modifiedPayload = JSON.stringify(JSON.parse(document.getElementById('jwtModified').value));
-      } catch (e) {
-        document.getElementById('jwtOutput').innerText = "❌ Invalid JSON in modified payload.";
-        return;
-      }
+    function loadSample(){
+      // example token with alg none (harmless sample)
+      jwtInput.value = 'eyJhbGciOiJub25lIn0.eyJpc3MiOiJleGFtcGxlLmNvbSIsInN1YiI6IjEyMyIsImV4cCI6MTk5OTk5OTk5OX0.';
+      decodeJWT();
+    }
 
-      const headerDecoded = base64UrlDecode(parts[0]);
-      const encodedHeader = base64UrlEncode(headerDecoded);
-      const encodedPayload = base64UrlEncode(modifiedPayload);
-
-      const newToken = encodedHeader + "." + encodedPayload + "." + parts[2];
-      document.getElementById('jwtOutput').innerText = "Modified Token:\n" + newToken;
+    function clearAll(){
+      jwtInput.value=''; jwtModified.value=''; decodedView.innerText='Header:\n\nPayload:\n\nSignature:'; jwtOutput.innerText='Modified token will appear here after re-encode.'; analysisArea.style.display='none'; leftStatus.innerText='Cleared'; leftStatus.style.color='var(--muted)';
     }
   </script>
 </body>
